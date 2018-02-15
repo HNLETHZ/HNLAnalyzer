@@ -96,7 +96,7 @@
 
 using namespace std;
 
-const int nLeptonsMax = 10;
+const int nLeptonsMax = 30; //zhud: originally nLeptonsMax=10;
 const int nJetsMax = 30;
 
 const char* _triggersTauNames8[6] =
@@ -186,48 +186,6 @@ const char* _postICHEP8[20] =
 };
 
 
-
-/*
- HLT_Mu8_v1
- HLT_Mu17_v1
- HLT_Mu24_v1
- HLT_Mu34_v1
- HLT_Ele8_CaloIdM_TrackIdM_PFJet30_v1
- HLT_Ele12_CaloIdM_TrackIdM_PFJet30_v1
- HLT_Ele18_CaloIdM_TrackIdM_PFJet30_v1
- HLT_Ele23_CaloIdM_TrackIdM_PFJet30_v1
- HLT_Ele33_CaloIdM_TrackIdM_PFJet30_v1
- 
- HLT_Mu8_TrkIsoVVL_v1
- HLT_Mu17_TrkIsoVVL_v1
- HLT_Mu24_TrkIsoVVL_v1
- HLT_Mu34_TrkIsoVVL_v1
- HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30_v1
- HLT_Ele18_CaloIdL_TrackIdL_IsoVL_PFJet30_v1
- HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30_v1
- HLT_Ele33_CaloIdL_TrackIdL_IsoVL_PFJet30_v1
- 
- HLT_Mu17_Mu8_DZ_v1
- HLT_Mu17_TkMu8_DZ_v1
- HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v1
- HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v1
- HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL_v1
- HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v1
- 
- HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v1
- HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v1
- HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v1
- HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v1
- HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_v1
- 
-
- 
- HLT_DoubleMu8_Mass8_PFHT300_v1
- HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300_v1
- HLT_DoubleEle8_CaloIdM_TrackIdM_Mass8_PFHT300_v1
- 
- HLT_Mu10_CentralPFJet30_BTagCSV0p5PF_v1
- HLT_Ele10_CaloIdM_TrackIdM_CentralPFJet30_BTagCSV0p5PF_v1*/
 
 class HNL : public edm::EDAnalyzer {
 public:
@@ -554,11 +512,23 @@ private:
     unsigned long _eventNb;
     unsigned long _runNb;
     unsigned long _lumiBlock;
+
+    int _nGenLep;
+    int _nGenE;
+    int _nGenMu;
+    int _nGenHNL;
+    int _nGenStatusNot1;
     
-    
+    //zhud: Begin efficiency KPIs
+    int _nGenHNLMu, _nlHNLMu;
+    double _GenHNLMuPt[nLeptonsMax], _lHNLMuPtmc[nLeptonsMax];
+
     double _lPt[nLeptonsMax], _lEta[nLeptonsMax], _lPhi[nLeptonsMax], _lE[nLeptonsMax];
     double _lPtmc[nLeptonsMax], _lEtamc[nLeptonsMax], _lPhimc[nLeptonsMax], _lEmc[nLeptonsMax];
     double _nuPtmc[nLeptonsMax], _nuEtamc[nLeptonsMax], _nuPhimc[nLeptonsMax], _nuEmc[nLeptonsMax];
+    double _lMuPt[nLeptonsMax], _lMuEta[nLeptonsMax], _lMuPhi[nLeptonsMax], _lMuE[nLeptonsMax];
+    double _GenMuPt[nLeptonsMax], _GenMuEta[nLeptonsMax], _GenMuPhi[nLeptonsMax], _GenMuE[nLeptonsMax];
+    //zhud: End efficiency KPIs
     
     int _pdgmc[nLeptonsMax];
 

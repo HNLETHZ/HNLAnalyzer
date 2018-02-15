@@ -29,82 +29,69 @@ using namespace math;
 using namespace reco::tau;
 
 HNL::HNL(const edm::ParameterSet & iConfig) :
-_miniIsoCut(0.4),//loose: abs iso < 30 || reliso < 1
-_relIsoCut(1),
-_absIsoCut(1),
-_chargeConsistency(false),
-_minPt0(5.),
-_minPt1(10.),
-_tightD0Mu(0.01),
-_tightD0E(0.02),
-_looseD0Mu(9999999.),
-_looseD0E(9999999.),
-_looseSIP(9999999.),
-//_looseD0Mu(0.2),
-//_looseD0E(9999999.),
-//_jetPtCut(40.),
-_jetPtCut(25.),
-_jetEtaCut(2.4),
-_tauPt(20),
-_tauEta(2.3),
-_regression(false),
-ifilterbadChCandToken(consumes<bool>                                (iConfig.getParameter<edm::InputTag>("BadChCandFilter"))),
-ifilterbadPFMuonToken(consumes<bool>                                (iConfig.getParameter<edm::InputTag>("BadPFMuon"))),
-mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap"))),
-mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap"))),
-mvaValuesHZZMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMapHZZ"))),
-mvaCategoriesHZZMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMapHZZ"))),
+    _miniIsoCut(0.4),//loose: abs iso < 30 || reliso < 1
+    _relIsoCut(1),
+    _absIsoCut(1),
+    _chargeConsistency(false),
+    _minPt0(1.), //default = 5.
+    _minPt1(10.),
+    _tightD0Mu(0.01),
+    _tightD0E(0.02),
+    _looseD0Mu(9999999.),
+    _looseD0E(9999999.),
+    _looseSIP(9999999.),
+    //_looseD0Mu(0.2),
+    //_looseD0E(9999999.),
+    //_jetPtCut(40.),
+    _jetPtCut(25.),
+    _jetEtaCut(2.4),
+    _tauPt(20),
+    _tauEta(2.3),
+    ifilterbadChCandToken(consumes<bool>                                (iConfig.getParameter<edm::InputTag>("BadChCandFilter"))),
+    ifilterbadPFMuonToken(consumes<bool>                                (iConfig.getParameter<edm::InputTag>("BadPFMuon"))),
+    mvaValuesMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMap"))),
+    mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap"))),
+    mvaValuesHZZMapToken_(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>("mvaValuesMapHZZ"))),
+    mvaCategoriesHZZMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMapHZZ"))),
 
-beamspotToken_                    (consumes< reco::BeamSpot >                (iConfig.getParameter<edm::InputTag>("BeamSpotLabel")))                                   ,
-vtxToken_                         (consumes<std::vector<Vertex> >                (iConfig.getParameter<edm::InputTag>("vtxLabel")))                                   ,
-rhoToken_                         (consumes<double>                                (iConfig.getParameter<edm::InputTag>("rhoLabel")))                                        ,
+    beamspotToken_                    (consumes< reco::BeamSpot >                (iConfig.getParameter<edm::InputTag>("BeamSpotLabel"))),
+    vtxToken_                         (consumes<std::vector<Vertex> >                (iConfig.getParameter<edm::InputTag>("vtxLabel"))),
+    rhoToken_                         (consumes<double>                                (iConfig.getParameter<edm::InputTag>("rhoLabel"))),
 
-fixedGridRhoToken_                (consumes<double>                                (iConfig.getParameter<edm::InputTag>("rhoLabelCN")))                               ,
-puinfoToken_                      (consumes<std::vector<PileupSummaryInfo> >       (iConfig.getParameter<edm::InputTag>("PUInfoLabel")))                                     ,
-geneventToken_                    (consumes<GenEventInfoProduct>                   (iConfig.getParameter<edm::InputTag>("generatorLabel")))                               ,
-lheeventToken_                     (consumes<LHEEventProduct>                        (iConfig.getParameter<edm::InputTag>("lheevent")))                               ,
-genparticleToken_                 (consumes<reco::GenParticleCollection>           (iConfig.getParameter<edm::InputTag>("genPartsLabel")))                               ,
+    fixedGridRhoToken_                (consumes<double>                                (iConfig.getParameter<edm::InputTag>("rhoLabelCN"))),
+    puinfoToken_                      (consumes<std::vector<PileupSummaryInfo> >       (iConfig.getParameter<edm::InputTag>("PUInfoLabel"))),
+    geneventToken_                    (consumes<GenEventInfoProduct>                   (iConfig.getParameter<edm::InputTag>("generatorLabel"))),
+    lheeventToken_                     (consumes<LHEEventProduct>                        (iConfig.getParameter<edm::InputTag>("lheevent"))),
+    genparticleToken_                 (consumes<reco::GenParticleCollection>           (iConfig.getParameter<edm::InputTag>("genPartsLabel"))),
 
-pfcToken_                         (consumes<pat::PackedCandidateCollection>                    (iConfig.getParameter<edm::InputTag>("pfcLabel")))                                       ,
-jetToken_                         (consumes<pat::JetCollection>                    (iConfig.getParameter<edm::InputTag>("JetLabel")))                                       ,
-muonToken_                        (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("MuonLabel")))                                      ,
-tauToken_                        (consumes<pat::TauCollection>                   (iConfig.getParameter<edm::InputTag>("TauLabel")))                                      ,
-electronToken1_                    (consumes<pat::ElectronCollection>             (iConfig.getParameter<edm::InputTag>("ElectronLabel")))                                  ,
-electronToken_                    (consumes<edm::View<pat::Electron> >             (iConfig.getParameter<edm::InputTag>("ElectronLabel")))                                  ,
-convToken_                        (consumes< std::vector<reco::Conversion> >                   (iConfig.getParameter<edm::InputTag>("convLabel")))                                      ,
-metToken_                         (consumes<pat::METCollection>                    (iConfig.getParameter<edm::InputTag>("METLabel")))                                       ,
-triggerToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("HLTResultsLabel")))
-, filterToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("filterResultsLabel")))
-//triggerObjects_                   (consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerobjects")))                             ,
-//triggerPrescales_                 (consumes<pat::PackedTriggerPrescales>           (iConfig.getParameter<edm::InputTag>("triggerprescales")))                           ,
-//noiseFilterToken_                 (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("noiseFilter")))                                ,
-//HBHENoiseFilterLooseResultToken_  (consumes<bool>                                  (iConfig.getParameter<edm::InputTag>("noiseFilterSelection_HBHENoiseFilterLoose")))  ,
-//HBHENoiseFilterTightResultToken_  (consumes<bool>                                  (iConfig.getParameter<edm::InputTag>("noiseFilterSelection_HBHENoiseFilterTight")))
+    pfcToken_                         (consumes<pat::PackedCandidateCollection>                    (iConfig.getParameter<edm::InputTag>("pfcLabel"))),
+    jetToken_                         (consumes<pat::JetCollection>                    (iConfig.getParameter<edm::InputTag>("JetLabel"))),
+    muonToken_                        (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("MuonLabel"))),
+    tauToken_                        (consumes<pat::TauCollection>                   (iConfig.getParameter<edm::InputTag>("TauLabel"))),
+    electronToken1_                    (consumes<pat::ElectronCollection>             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
+    electronToken_                    (consumes<edm::View<pat::Electron> >             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
+    convToken_                        (consumes< std::vector<reco::Conversion> >                   (iConfig.getParameter<edm::InputTag>("convLabel"))),
+    metToken_                         (consumes<pat::METCollection>                    (iConfig.getParameter<edm::InputTag>("METLabel"))),
+    triggerToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("HLTResultsLabel"))),
+    filterToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("filterResultsLabel")))
 
-{
-    Sample              = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
-    IT_muon             = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
-    IT_electron         = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
-    IT_tau              = iConfig.getParameter<edm::InputTag>("TauLabel") ;
-    //IT_tauDiscriminator = iConfig.getParameter<edm::InputTag>("TauDiscriminatorLabel") ;
-    IT_htt              = iConfig.getParameter<edm::InputTag>("L1httLabel");
-    IT_jet              = iConfig.getParameter<edm::InputTag>("JetLabel");
-    IT_pfmet            = iConfig.getParameter<edm::InputTag>("METLabel")  ;
-    IT_beamspot         = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
-    IT_hltresults       = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
-    IT_genParts         = iConfig.getParameter<edm::InputTag>("genPartsLabel");
-    
-    //IT_METFilters       = iConfig.getParameter<edm::InputTag>("METFilter");
-    
-    
-    
-    //outfile = fopen("FakeSync.txt", "w");
-}
+    {
+        Sample              = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
+        IT_muon             = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
+        IT_electron         = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
+        IT_tau              = iConfig.getParameter<edm::InputTag>("TauLabel") ;
+        IT_htt              = iConfig.getParameter<edm::InputTag>("L1httLabel");
+        IT_jet              = iConfig.getParameter<edm::InputTag>("JetLabel");
+        IT_pfmet            = iConfig.getParameter<edm::InputTag>("METLabel")  ;
+        IT_beamspot         = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
+        IT_hltresults       = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
+        IT_genParts         = iConfig.getParameter<edm::InputTag>("genPartsLabel");
+    }
 
 
 void HNL::beginJob()
 {
-    
+
     Nvtx      = fs->make<TH1F>("N_{vtx}"        , "Number of vertices;N_{vtx};events / 1"  ,    40, 0., 40.);
     _hCounter = fs->make<TH1D>("hCounter", "Events counter", 5,0,5);
     
@@ -214,101 +201,204 @@ void HNL::endJob() {
     delete fMetCorrector;
 }
 
-void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
-{
+void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
+    //if (iEvent.id().event()!=100) return;
+    cout << "--------------------------------------------------------------------------------------------------------------" << endl;
+    cout << "---zhud: doing HNL::analyze() with event: " << iEvent.id().event() << endl;;
     //bool islepton;
     if (Sample=="ElectronsMC") {
         _genHT = 0;
+
+
         //******************************************************************************************************************
-        // Gen level particles                  ****************************************************************************
+        // begin Gen level particles                  ****************************************************************************
         //******************************************************************************************************************
         //
         
-        //bool exists = false;
-        
-        iEvent.getByToken(genparticleToken_, TheGenParticles);
-        std::vector<const GenParticle*> vGenElectrons, vGenMuons, vGenNPElectrons, vGenNPMuons, vGenW;
-        if( TheGenParticles.isValid() ) {
-            GPM.SetCollection(TheGenParticles);
-            GPM.Classify();
-            vGenMuons = GPM.filterByStatus(GPM.getPromptMuons(),1);
-            vGenElectrons = GPM.filterByStatus(GPM.getPromptElectrons(),1);
-            vGenNPMuons = GPM.filterByStatus(GPM.getNonPromptMuons(),1);
-            vGenNPElectrons = GPM.filterByStatus(GPM.getNonPromptElectrons(),1);
-            //std::cout<<"*************"<<std::endl;
+            //bool exists = false;
+
+            //initialize counters
+            _nGenLep = 0;
+            _nGenE = 0;
+            _nGenMu = 0;
+            _nGenStatusNot1 = 0;
+            _nGenHNL = 0;
+            _nGenHNLMu = 0;
+            _nlHNLMu = 0;
+
+            _nMu=0;
             
-            TLorentzVector Gen0;
-            Gen0.SetPtEtaPhiE( 0, 0, 0, 0);
+            iEvent.getByToken(genparticleToken_, TheGenParticles);
+            std::vector<const GenParticle*> vGenElectrons, vGenMuons, vGenNPElectrons, vGenNPMuons, vGenW;
             
-            TLorentzVector Gen0s;
-            Gen0s.SetPtEtaPhiE( 0, 0, 0, 0);
-            
-            TLorentzVector Gen0s2;
-            Gen0s2.SetPtEtaPhiE( 0, 0, 0, 0);
-            
-            int cnt = 0;
-            double leadPt = 0;
-            
-            for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
-                int id = TMath::Abs(p->pdgId());
-                if (id == 1000023) mChi20 = p->mass();
-                if (id == 1000022) mChi10 = p->mass();
-                if ( (id == 12 || id == 14 || id == 16 ) && (p->status() == 1) ) {
-                    TLorentzVector Gen;
-                    Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() );
-                    Gen0 += Gen;
-                }
-                if ( (id == 11 || id == 13  ) && (p->status() == 1) ) {
-                    std::cout<<"pt = "<<p->pt()<<std::endl;
-                    GPM.printInheritance(&*p);
-                }
-                if ( ( id == 15 ) && (p->status() == 2) ) {
-                    std::cout<<"pt = "<<p->pt()<<std::endl;
-                    GPM.printInheritance(&*p);
-                }
-                //if ( (id == 6 || id == 24 || id == 23 || id == 25 ) && (p->isLastCopy()) && (p->status() == 62) ) {
-                if ( (id == 23) && (p->isLastCopy()) && (p->status() == 62) ) {
-                    TLorentzVector Gen;
-                    Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() );
-                    Gen0s += Gen;
-                    cnt++;
-                    //std::cout<<id<<" "<<p->status()<<" "<<p->pt()<<std::endl;
-                    if (id == 6) {
-                        Gen0s2 += Gen;
+            if(TheGenParticles.isValid()) {
+                GPM.SetCollection(TheGenParticles);
+                GPM.Classify();
+                vGenMuons = GPM.filterByStatus(GPM.getPromptMuons(),1);
+                vGenElectrons = GPM.filterByStatus(GPM.getPromptElectrons(),1);
+                vGenNPMuons = GPM.filterByStatus(GPM.getNonPromptMuons(),1);
+                vGenNPElectrons = GPM.filterByStatus(GPM.getNonPromptElectrons(),1);
+                //std::cout<<"*************"<<std::endl;
+                
+                TLorentzVector Gen0;
+                Gen0.SetPtEtaPhiE( 0, 0, 0, 0);
+                
+                TLorentzVector Gen0s;
+                Gen0s.SetPtEtaPhiE( 0, 0, 0, 0);
+                
+                TLorentzVector Gen0s2;
+                Gen0s2.SetPtEtaPhiE( 0, 0, 0, 0);
+                
+                int cnt = 0;
+                double leadPt = 0;
+                
+
+                //============ Pat Muons ============
+                edm::Handle< std::vector<pat::Muon> > thePatMuons;
+                iEvent.getByToken( muonToken_, thePatMuons );
+                if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
+                //==================================
+
+                int GenParticlecounter = 0;            
+                for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
+                    
+                    //cout << "------------------------------------------------------------------"<< endl;
+                    //cout << "---zhud: starting for loop through all TheGenParticles; Number = " << GenParticlecounter << endl;
+    		        int id = TMath::Abs(p->pdgId());
+                    // std::cout<<"gen particle pdg ID "<<id<<std::endl;
+                    //if (id == 1000023) mChi20 = p->mass(); // SUSY stuff
+                    //if (id == 1000022) mChi10 = p->mass(); // SUSY stuff
+                    if ( (id == 12 || id == 14 || id == 16 ) && (p->status() == 1) ) { // 12 = nu_e; 14 = nu_mu; 16 = nu_tau
+                        TLorentzVector Gen;
+                        //cout << "---zhud: id = 12 | 14 | 16; doing Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() ): ";
+                        Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() );
+                        Gen0 += Gen;
                     }
-                }
-                std::cout<<"All: id = "<<id<<"; status = "<<p->status()<<"; last copy = "<<p->isLastCopy()<<"; mass = "<<p->mass()<<std::endl;
-                if (id == 22 && (p->status() == 23 || p->status() == 1)) {
-                    if (p->pt() > leadPt) {
-                        _genPhotOrigin = photonOrigin(&*p);
-                        leadPt = p->pt();
+                    if ( (id == 11 || id == 13  ) && (p->status() == 1) ) { // 11 = e, 13 = mu
+                        //std::cout<<"---zhud: Recorded a Gen particle (id="<<id<<") with pt = "<<p->pt()<<"; ";
+            		    //std::cout<<"Print Inheritance tree: "; GPM.printInheritance(&*p); cout <<endl;
+                        //cout << "---zhud: do _nGenLep++ while p_status is "<<p->status()<<endl;
+                        _nGenLep++;
+                        if (p->status()!=1){_nGenStatusNot1++;}
+                        if (id == 11 && p->status()==1){_nGenE++;}
+                        if (id == 13 && p->status()==1){
+                            // _GenMuPt[_nGenMu] = p ->pt();
+                            // _nGenMu++;
+                            if (GPM.fromID(&*p,9900012) && p->pt()>1) {
+                                _GenHNLMuPt[_nGenHNLMu] = p->pt();
+                                _nGenHNLMu++;
+                                //cout<< "---zhud: This is a GenMu from HNL! Recorded into _GenHNLMuPt with pt = "<< p->pt()<<endl;
+                            }
+                        }
+                        if (GPM.fromID(&*p,9900012)){
+                            _nGenHNL++;
+                            //cout<< "---zhud: Found one GenLep from HNL. # of HNLs: "<< _nGenHNL << endl;
+                        }
+
                     }
+                    if ( ( id == 15 ) && (p->status() == 2) ) { //15 = tau
+                        //cout<< "---zhud: id = 15; ";
+    		            // std::cout<<"---pt = "<<p->pt()<<std::endl;
+                        GPM.printInheritance(&*p);
+                    }
+                    //if ( (id == 6 || id == 24 || id == 23 || id == 25 ) && (p->isLastCopy()) && (p->status() == 62) ) {
+                    if ( (id == 23) && (p->isLastCopy()) && (p->status() == 62) ) { // 23 = Z_0
+                        //cout << "---zhud: id = 23; "<< endl;
+                        TLorentzVector Gen;
+                        Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() );
+                        Gen0s += Gen;
+                        cnt++;
+                        //std::cout<<id<<" "<<p->status()<<" "<<p->pt()<<std::endl;
+                        if (id == 6) {
+                            Gen0s2 += Gen;
+                        }
+                    }
+                    //zhud: Here is the most printed output line in terminal
+    		        //std::cout<<"---Most printed version: All: id = "<<id<<"; status = "<<p->status()<<"; last copy = "<<p->isLastCopy()<<"; mass = "<<p->mass()<<std::endl;
+                    if (id == 22 && (p->status() == 23 || p->status() == 1)) { // 22 = gamma
+                        if (p->pt() > leadPt) {
+                            // cout<<"---zhud: id = 22; "<< endl;
+                            _genPhotOrigin = photonOrigin(&*p);
+                            leadPt = p->pt();
+                        }
+                    }
+                    
+                    if ((id == 1 || id == 2 || id == 3 || id == 4 || id == 5 || id == 21 || id == 22 ) && (p->status() == 23)){
+                        _genHT += p->pt();
+                    }
+                    
+            
+                    //zhud: Efficiency Analysis
+                    if((id == 13) && (p->status() == 1)){
+                        
+                        cout << "---zhud: doing Gen Muon number " << GenParticlecounter << ": ";
+                        
+                        _GenMuPt[_nGenMu] = p->pt();
+                        _GenMuEta[_nGenMu] = p->eta();
+                        _GenMuPhi[_nGenMu] = p->phi();
+                        _GenMuE[_nGenMu] = p->energy();
+
+                        cout << "pt = " << p->pt() << endl;
+                        _nGenMu++;
+                        
+                        std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+                        bool isdetected = false;
+                        TLorentzVector vGen, vReco;
+                        vGen.SetPtEtaPhiE(p->pt(),p->eta(),p->phi(),p->energy());
+                        double deltaR = 9999.;
+
+
+                        for(unsigned int i = 0 ; i < sMu.size() ;i++ ){
+                            const pat::Muon *iM = sMu[i];
+                            vReco.SetPtEtaPhiE(iM->pt(),iM->eta(),iM->phi(),iM->energy());
+                            double deltaRcur = vGen.DeltaR(vReco);
+                            if (deltaRcur <deltaR){
+                                deltaR = deltaRcur;
+                            }    
+                        }
+                        
+                        if (deltaR < 0.2){
+                            isdetected = true;
+                            _lMuPt[_nGenMu] = p->pt();
+                            _nMu++;
+                            cout << "---zhud: Found a corresponding Reco Muon!!!" << endl;
+                        }
+
+                        if (isdetected == false){
+                            cout << "---zhud: NO corresponding Reco Muon founded..." << endl;
+                        }
+
+
+                        // if (GPM.fromID(&*p,9900012)){
+                        // }
+
+                    }
+
+
+
+                    GenParticlecounter ++;
+                    //cout <<"------------------------------------------------------------------"<<endl;
                 }
                 
-                if ((id == 1 || id == 2 || id == 3 || id == 4 || id == 5 || id == 21 || id == 22 ) && (p->status() == 23)){
-                    _genHT += p->pt();
+
+                if (Gen0.E()!=0) {
+                    _genmet = Gen0.Pt();
+                    _genmet_phi = Gen0.Phi();
+                } else {
+                    _genmet = 0;
+                    _genmet_phi = 0;
                 }
                 
+                _ptSystem = Gen0s.Pt();
+                _ptTTSystem = Gen0s2.Pt();
+                
+                
+                //std::cout<<cnt<<" particles: "<<_ptSystem<<" "<<_ptTTSystem<<std::endl;
+                //std::cout<<"masses "<<mChi20<<" "<<mChi10<<std::endl;           
             }
-            if (Gen0.E()!=0) {
-                _genmet = Gen0.Pt();
-                _genmet_phi = Gen0.Phi();
-            } else {
-                _genmet = 0;
-                _genmet_phi = 0;
-            }
-            
-            _ptSystem = Gen0s.Pt();
-            _ptTTSystem = Gen0s2.Pt();
-            
-            
-            //std::cout<<cnt<<" particles: "<<_ptSystem<<" "<<_ptTTSystem<<std::endl;
-            //std::cout<<"masses "<<mChi20<<" "<<mChi10<<std::endl;
-            
-        }
         //std::cout<<"photon "<<int(exists)<<std::endl;
         //******************************************************************************************************************
-        //******************************************************************************************************************
+        // end Gen Level Particles *****************************************************************************************
         //******************************************************************************************************************
         
         //**************************************************************************************
@@ -318,59 +408,44 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
     
 
     
-    _runNb = iEvent.id().run();
-    _eventNb = iEvent.id().event();
-    _lumiBlock = iEvent.luminosityBlock();
     
-    //if (_eventNb!=221549) return;
     
-    //std::cout<<iEvent.GenLumiInfoHeader_generator__HLT.obj.configDescription_.data()<<std::endl;
-    //if ( _eventNb!=22440309 && _eventNb!=22442490 && _eventNb!=22957921) return;
-    //if ( _eventNb!=39158858) return;
-    //std::cout<<"EVENT "<<_eventNb<<std::endl;
-    
+    //============ Begin Counter ============    
     //============ Total number of events is the sum of the events ============
     //============ in each of these luminosity blocks ============
-    _weight = 1;
-    if (Sample=="ElectronsMC") {
+        _runNb = iEvent.id().run();
+        _eventNb = iEvent.id().event();
+        _lumiBlock = iEvent.luminosityBlock();
+        _weight = 1;
         
-        //edm::Handle< LHEEventProduct > product;
-        //iEvent.getByToken(lheeventToken_, product);
-        
-        //LHEEventProduct::comments_const_iterator c_begin = product->comments_begin();
-        //LHEEventProduct::comments_const_iterator c_end = product->comments_end();
-        
-        
-        //for( LHEEventProduct::comments_const_iterator cit=c_begin; cit!=c_end; ++cit) {
-        //std::cout<<"stored "<<(*cit)<<std::endl;
-        //size_t found = (*cit).find("model");
-        //}
-        
-        edm::Handle<GenEventInfoProduct> pdfvariables;
-        iEvent.getByToken(geneventToken_, pdfvariables);
-        _weight=pdfvariables->weight();
-        
-        if (_weight > 0) _weight = 1;
-        else _weight = -1;
-        
-        edm::Handle<std::vector<PileupSummaryInfo> > pileupInfo;
-        iEvent.getByToken(puinfoToken_, pileupInfo); 
-        //iEvent.getByToken("AddPileupInfo", pileupInfo);
-        std::vector<PileupSummaryInfo>::const_iterator PVI;
-        
-        //std::cout<<"got pu"<<std::endl;
-        for (PVI = pileupInfo->begin(); PVI !=pileupInfo->end(); ++PVI) {
-            if( PVI->getBunchCrossing() == 0 ) { // in-time PU
-                _n_Interactions     = PVI->getPU_NumInteractions();
-                _n_trueInteractions = PVI->getTrueNumInteractions();
+        if (Sample=="ElectronsMC") {    
+            edm::Handle<GenEventInfoProduct> pdfvariables;
+            iEvent.getByToken(geneventToken_, pdfvariables);
+            _weight=pdfvariables->weight();
+            
+            if (_weight > 0) _weight = 1;
+            else _weight = -1;
+            
+            edm::Handle<std::vector<PileupSummaryInfo> > pileupInfo;
+            iEvent.getByToken(puinfoToken_, pileupInfo); 
+            //iEvent.getByToken("AddPileupInfo", pileupInfo);
+            std::vector<PileupSummaryInfo>::const_iterator PVI;
+            
+            //std::cout<<"got pu"<<std::endl;
+            for (PVI = pileupInfo->begin(); PVI !=pileupInfo->end(); ++PVI) {
+                if( PVI->getBunchCrossing() == 0 ) { // in-time PU
+                    _n_Interactions     = PVI->getPU_NumInteractions();
+                    _n_trueInteractions = PVI->getTrueNumInteractions();
+                }
             }
+            //std::cout<<"got pu "<<_n_Interactions<<" "<<_n_trueInteractions<<std::endl;        
         }
-        //std::cout<<"got pu "<<_n_Interactions<<" "<<_n_trueInteractions<<std::endl;
-        
-    }
-    _nEventsTotalCounted+=_weight;
-    _hCounter->Fill(0.,_weight);
-    //============ Counter done ============
+
+        _nEventsTotalCounted+=_weight;
+        _hCounter->Fill(0.,_weight);
+    //============ End Counter ============
+
+
     filterbadChCandidate = false;
     filterbadPFMuon = false;
     if (Sample!="ElectronsMC") {
@@ -383,34 +458,35 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         iEvent.getByToken(ifilterbadPFMuonToken, ifilterbadPFMuon);
         filterbadPFMuon = *ifilterbadPFMuon;
     }
+
     //============ Beamspot ============
-    edm::Handle< reco::BeamSpot > theBeamSpot;
-    iEvent.getByToken( beamspotToken_, theBeamSpot );
-    if( ! theBeamSpot.isValid() ) ERR( IT_beamspot ) ;
-    BeamSpot::Point  BS= theBeamSpot->position();
+        edm::Handle< reco::BeamSpot > theBeamSpot;
+        iEvent.getByToken( beamspotToken_, theBeamSpot );
+        if( ! theBeamSpot.isValid() ) ERR( IT_beamspot ) ;
+        BeamSpot::Point  BS= theBeamSpot->position();
     //==================================
     
     //============ Primary vertices ============
-    edm::InputTag IT_goodVtx = edm::InputTag("offlineSlimmedPrimaryVertices");
-    edm::Handle<std::vector<Vertex> > theVertices;
-    iEvent.getByToken( vtxToken_, theVertices) ;
-    if( ! theVertices.isValid() ) ERR(IT_goodVtx ) ;
-    int nvertex = theVertices->size();
-    
-    _n_PV = nvertex;
-    
-    Nvtx->Fill(TMath::Min(nvertex,39));
-    if(! nvertex ){
-        cout << "[WARNING]: No candidate primary vertices passed the quality cuts, so skipping event" << endl;
-        return ;
-    }
-    
-    PV = theVertices->begin()->position();
-    const Vertex* PVtx = &((*theVertices)[0]);
-    _PVchi2 = PVtx->chi2();
-    _PVerr[0] = PVtx->xError();
-    _PVerr[1] = PVtx->yError();
-    _PVerr[2] = PVtx->zError();
+        edm::InputTag IT_goodVtx = edm::InputTag("offlineSlimmedPrimaryVertices");
+        edm::Handle<std::vector<Vertex> > theVertices;
+        iEvent.getByToken( vtxToken_, theVertices) ;
+        if( ! theVertices.isValid() ) ERR(IT_goodVtx ) ;
+        int nvertex = theVertices->size();
+        
+        _n_PV = nvertex;
+        
+        Nvtx->Fill(TMath::Min(nvertex,39));
+        if(! nvertex ){
+            cout << "[WARNING]: No candidate primary vertices passed the quality cuts, so skipping event" << endl;
+            return ;
+        }
+        
+        PV = theVertices->begin()->position();
+        const Vertex* PVtx = &((*theVertices)[0]);
+        _PVchi2 = PVtx->chi2();
+        _PVerr[0] = PVtx->xError();
+        _PVerr[1] = PVtx->yError();
+        _PVerr[2] = PVtx->zError();
     //==================================
     
     for (int i=0; i!=nLeptonsMax; ++i) {
@@ -418,292 +494,208 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
     }
     
     //============= trigger ==============
-    edm::Handle<TriggerResults> trigResults;
-    iEvent.getByToken(triggerToken_, trigResults);
-    
-    for (int i=0; i!=20; ++i) {
-        _triggersPost[i] = 0;
-    }
-    
-    for (int i=0; i!=5; ++i) {
-        for (int j=0; j!=5; ++j) { _triggersCS[j][i] = 0;}
-    }
-    for (int i=0; i!=8; ++i) {
-        _triggers1l[i] = 0;
-    }
-    for (int i=0; i!=6; ++i) {
-        _triggersTau[i] = 0;
-        for (int j=0; j!=2; ++j) _triggers2l[j][i] = 0;
-        for (int j=0; j!=2; ++j) _triggers2lbkp[j][i] = 0;
-    }
-    
-    for (int i=0; i!=2; ++i) _triggersCSb[i] = 0;
-    
-    if( trigResults.failedToGet() && firstEvent_) cout << "--- NO TRIGGER RESULTS !! ---" << endl;
-    if( !trigResults.failedToGet() ) {
+        edm::Handle<TriggerResults> trigResults;
+        iEvent.getByToken(triggerToken_, trigResults);
         
-        unsigned int n_Triggers = trigResults->size();
-        
-        const edm::TriggerNames & triggerNames = iEvent.triggerNames(*trigResults);
-        
-        if ( firstEvent_ ) {
-            edm::TriggerNames::Strings allTriggers( triggerNames.triggerNames() );
-            std::cout << "--- Trigger Menu --- " << std::endl;
-            for ( unsigned int i_Name = 0; i_Name < n_Triggers; ++i_Name ) {
-                std::cout << allTriggers.at( i_Name ) << std::endl;
-            }
-            std::cout << "-------------------- " << std::endl;
-            firstEvent_ = false;
+        for (int i=0; i!=20; ++i) {
+            _triggersPost[i] = 0;
         }
         
-        for( unsigned int i_Trig = 0; i_Trig < n_Triggers; ++i_Trig ) {
+        for (int i=0; i!=5; ++i) {
+            for (int j=0; j!=5; ++j) { _triggersCS[j][i] = 0;}
+        }
+        for (int i=0; i!=8; ++i) {
+            _triggers1l[i] = 0;
+        }
+        for (int i=0; i!=6; ++i) {
+            _triggersTau[i] = 0;
+            for (int j=0; j!=2; ++j) _triggers2l[j][i] = 0;
+            for (int j=0; j!=2; ++j) _triggers2lbkp[j][i] = 0;
+        }
+        
+        for (int i=0; i!=2; ++i) _triggersCSb[i] = 0;
+        
+        if( trigResults.failedToGet() && firstEvent_) cout << "--- NO TRIGGER RESULTS !! ---" << endl;
+        if( !trigResults.failedToGet() ) {
             
-            if (trigResults.product()->accept(i_Trig)) {
+            unsigned int n_Triggers = trigResults->size();
+            
+            const edm::TriggerNames & triggerNames = iEvent.triggerNames(*trigResults);
+            
+            // if ( firstEvent_ ) {
+            //     edm::TriggerNames::Strings allTriggers( triggerNames.triggerNames() );
+            //     std::cout << "--- Trigger Menu --- " << std::endl;
+            //     for ( unsigned int i_Name = 0; i_Name < n_Triggers; ++i_Name ) {
+            //         std::cout << allTriggers.at( i_Name ) << std::endl;
+            //     }
+            //     std::cout << "-------------------- " << std::endl;
+            //     firstEvent_ = false;
+            // }
+            
+            for( unsigned int i_Trig = 0; i_Trig < n_Triggers; ++i_Trig ) {
                 
-                TString TrigPath = triggerNames.triggerName(i_Trig);
-                //std::cout<<TrigPath<<std::endl;
-                for (int i=0; i!=6; ++i) {
-                    if (TrigPath.Contains(_triggersTauNames8[i]))
-                        _triggersTau[i] = 1;
-                    for (int j=0; j!=2; ++j) {
-                        if (TrigPath.Contains(_triggers2lNames8[j][i]))
-                            _triggers2l[j][i] = 1;
+                if (trigResults.product()->accept(i_Trig)) {
+                    
+                    TString TrigPath = triggerNames.triggerName(i_Trig);
+                    //std::cout<<TrigPath<<std::endl;
+                    for (int i=0; i!=6; ++i) {
+                        if (TrigPath.Contains(_triggersTauNames8[i]))
+                            _triggersTau[i] = 1;
+                        for (int j=0; j!=2; ++j) {
+                            if (TrigPath.Contains(_triggers2lNames8[j][i]))
+                                _triggers2l[j][i] = 1;
+                        }
+                        for (int j=0; j!=2; ++j) {
+                            if (TrigPath.Contains(_triggers2lNames8Bkp[j][i]))
+                                _triggers2lbkp[j][i] = 1;
+                        }
                     }
-                    for (int j=0; j!=2; ++j) {
-                        if (TrigPath.Contains(_triggers2lNames8Bkp[j][i]))
-                            _triggers2lbkp[j][i] = 1;
+                    
+                    for (int i=0; i!=5; ++i) {
+                        for (int j=0; j!=5; ++j) {
+                            if (TrigPath.Contains(_triggersCSNames8[j][i]))
+                                _triggersCS[j][i] = 1;
+                        }
                     }
-                }
-                
-                for (int i=0; i!=5; ++i) {
-                    for (int j=0; j!=5; ++j) {
-                        if (TrigPath.Contains(_triggersCSNames8[j][i]))
-                            _triggersCS[j][i] = 1;
+                    for (int i=0; i!=8; ++i) {
+                        if (TrigPath.Contains(_triggers1lNames8[i]))
+                            _triggers1l[i] = 1;
                     }
-                }
-                for (int i=0; i!=8; ++i) {
-                    if (TrigPath.Contains(_triggers1lNames8[i]))
-                        _triggers1l[i] = 1;
-                }
-                for (int i=0; i!=2; ++i) {
-                    if (TrigPath.Contains(_triggersCSbNames8[i]))
-                        _triggersCSb[i] = 1;
-                }
-                for (int i=0; i!=20; ++i) {
-                    if (TrigPath.Contains(_postICHEP8[i]))
-                        _triggersPost[i] = 1;
+                    for (int i=0; i!=2; ++i) {
+                        if (TrigPath.Contains(_triggersCSbNames8[i]))
+                            _triggersCSb[i] = 1;
+                    }
+                    for (int i=0; i!=20; ++i) {
+                        if (TrigPath.Contains(_postICHEP8[i]))
+                            _triggersPost[i] = 1;
+                    }
                 }
             }
         }
-    }
-    //==================================
-    //============= filters ==============
-    edm::Handle<TriggerResults> filtResults;
-    iEvent.getByToken(filterToken_, filtResults);
-    
-    Flag_eeBadScFilter = 0;
-    Flag_eeBadScFilter = 0;
-    Flag_HBHENoiseFilter = 0;
-    Flag_HBHENoiseIsoFilter = 0;
-    Flag_globalTightHalo2016Filter = 0;
-    Flag_CSCTightHalo2015Filter = 0;
-    Flag_EcalDeadCellTriggerPrimitiveFilter = 0;
-    Flag_goodVertices = 0;
-    if( filtResults.failedToGet() ) cout << "--- NO FILTER RESULTS !! ---" << endl;
-    if( !filtResults.failedToGet() ) {
-        unsigned int n_Triggers = filtResults->size();
-        const edm::TriggerNames & triggerNames = iEvent.triggerNames(*filtResults);
-        for( unsigned int i_Trig = 0; i_Trig < n_Triggers; ++i_Trig ) {
-            if (filtResults.product()->accept(i_Trig)) {
-                
-                TString TrigPath = triggerNames.triggerName(i_Trig);
-                //std::cout<<TrigPath<<std::endl;
-                
-                if (TrigPath.Contains("Flag_eeBadScFilter"))
-                    Flag_eeBadScFilter = true;
-                if (TrigPath.Contains("Flag_HBHENoiseFilter"))
-                    Flag_HBHENoiseFilter = true;
-                if (TrigPath.Contains("Flag_HBHENoiseIsoFilter"))
-                    Flag_HBHENoiseIsoFilter = true;
-                if (TrigPath.Contains("Flag_globalTightHalo2016Filter"))
-                    Flag_globalTightHalo2016Filter = true;
-                if (TrigPath.Contains("Flag_CSCTightHalo2015Filter"))
-                    Flag_CSCTightHalo2015Filter = true;
-                if (TrigPath.Contains("Flag_EcalDeadCellTriggerPrimitiveFilter"))
-                    Flag_EcalDeadCellTriggerPrimitiveFilter = true;
-                if (TrigPath.Contains("Flag_goodVertices"))
-                    Flag_goodVertices = true;
-            }
-        }
-    }
-    //std::cout<<"read "<<Flag_globalTightHalo2016Filter<<std::endl;
     //==================================
 
+
+    //============= filters ==============
+        edm::Handle<TriggerResults> filtResults;
+        iEvent.getByToken(filterToken_, filtResults);
+        
+        Flag_eeBadScFilter = 0;
+        Flag_eeBadScFilter = 0;
+        Flag_HBHENoiseFilter = 0;
+        Flag_HBHENoiseIsoFilter = 0;
+        Flag_globalTightHalo2016Filter = 0;
+        Flag_CSCTightHalo2015Filter = 0;
+        Flag_EcalDeadCellTriggerPrimitiveFilter = 0;
+        Flag_goodVertices = 0;
+        if( filtResults.failedToGet() ) cout << "--- NO FILTER RESULTS !! ---" << endl;
+        if( !filtResults.failedToGet() ) {
+            unsigned int n_Triggers = filtResults->size();
+            const edm::TriggerNames & triggerNames = iEvent.triggerNames(*filtResults);
+            for( unsigned int i_Trig = 0; i_Trig < n_Triggers; ++i_Trig ) {
+                if (filtResults.product()->accept(i_Trig)) {
+                    
+                    TString TrigPath = triggerNames.triggerName(i_Trig);
+                    //std::cout<<TrigPath<<std::endl;
+                    
+                    if (TrigPath.Contains("Flag_eeBadScFilter"))
+                        Flag_eeBadScFilter = true;
+                    if (TrigPath.Contains("Flag_HBHENoiseFilter"))
+                        Flag_HBHENoiseFilter = true;
+                    if (TrigPath.Contains("Flag_HBHENoiseIsoFilter"))
+                        Flag_HBHENoiseIsoFilter = true;
+                    if (TrigPath.Contains("Flag_globalTightHalo2016Filter"))
+                        Flag_globalTightHalo2016Filter = true;
+                    if (TrigPath.Contains("Flag_CSCTightHalo2015Filter"))
+                        Flag_CSCTightHalo2015Filter = true;
+                    if (TrigPath.Contains("Flag_EcalDeadCellTriggerPrimitiveFilter"))
+                        Flag_EcalDeadCellTriggerPrimitiveFilter = true;
+                    if (TrigPath.Contains("Flag_goodVertices"))
+                        Flag_goodVertices = true;
+                }
+            }
+        }
+    //=================================
     
-    //============ L1 HTT ============
-    /* _l1HTT = 0;
-     edm::Handle< std::vector< l1extra::L1EtMissParticle> > theHTT;
-     iEvent.getByToken(IT_htt, theHTT ); //
-     if( ! theHTT.isValid() ) cout << "--- NO HTT !! ---" << endl;
-     const vector<l1extra::L1EtMissParticle> *theHTTcol = theHTT.product();
-     if ((&(theHTTcol->front())))
-     _l1HTT = (&(theHTTcol->front()))->etTotal();*/
-    //vector<l1extra::L1EtMissParticle>     "l1extraParticles"          "MHT"             "RECO"
-    //==================================
-    
+   
     //============ Pat MET ============
-    edm::Handle< vector<pat::MET> > ThePFMET;
-    iEvent.getByToken(metToken_, ThePFMET);
-    if( ! ThePFMET.isValid() ) ERR( IT_pfmet );
-    const vector<pat::MET> *pfmetcol = ThePFMET.product();
-    const pat::MET *pfmet;
-    pfmet = &(pfmetcol->front());
-    _met = pfmet->pt();
-    _met_phi = pfmet->phi();
-    //if (_met < 50) return;
-    //std::cout<<"raw met "<<_met<<std::endl;
+        edm::Handle< vector<pat::MET> > ThePFMET;
+        iEvent.getByToken(metToken_, ThePFMET);
+        if( ! ThePFMET.isValid() ) ERR( IT_pfmet );
+        const vector<pat::MET> *pfmetcol = ThePFMET.product();
+        const pat::MET *pfmet;
+        pfmet = &(pfmetcol->front());
+        _met = pfmet->pt();
+        _met_phi = pfmet->phi();
+        //if (_met < 50) return;
+        //std::cout<<"raw met "<<_met<<std::endl;
     //==================================
     
     //============ Pat Jets ============
-    edm::Handle< std::vector< pat::Jet> > thePatJets;
-    iEvent.getByToken(jetToken_ , thePatJets );
-    if( ! thePatJets.isValid() ) ERR(IT_jet);
+        edm::Handle< std::vector< pat::Jet> > thePatJets;
+        iEvent.getByToken(jetToken_ , thePatJets );
+        if( ! thePatJets.isValid() ) ERR(IT_jet);
     //==================================
     
     //============ PF cand ============
-    edm::Handle<pat::PackedCandidateCollection> pfcands;
-    iEvent.getByToken(pfcToken_, pfcands);
+        edm::Handle<pat::PackedCandidateCollection> pfcands;
+        iEvent.getByToken(pfcToken_, pfcands);
     //==================================
     
     //============ Pat Muons ============
-    edm::Handle< std::vector<pat::Muon> > thePatMuons;
-    iEvent.getByToken( muonToken_, thePatMuons );
-    if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
+        edm::Handle< std::vector<pat::Muon> > thePatMuons;
+        iEvent.getByToken( muonToken_, thePatMuons );
+        if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
     //==================================
     
     //============ Pat Electrons ============
-    edm::Handle< std::vector<pat::Electron> > thePatElectrons;
-    iEvent.getByToken( electronToken1_, thePatElectrons );
-    if( ! thePatElectrons.isValid() ) ERR( IT_electron );
-    //==================================
-    edm::Handle< edm::View<pat::Electron> > thePatElectronsView;
-    iEvent.getByToken( electronToken_, thePatElectronsView );
-    //if( ! thePatElectrons.isValid() ) ERR( IT_electron );
+        edm::Handle< std::vector<pat::Electron> > thePatElectrons;
+        iEvent.getByToken( electronToken1_, thePatElectrons );
+        if( ! thePatElectrons.isValid() ) ERR( IT_electron );
+        //==================================
+        edm::Handle< edm::View<pat::Electron> > thePatElectronsView;
+        iEvent.getByToken( electronToken_, thePatElectronsView );
+        //if( ! thePatElectrons.isValid() ) ERR( IT_electron );
     //==================================
     
     //============ Pat Taus ============
-    edm::Handle< std::vector<pat::Tau> > thePatTaus;
-    iEvent.getByToken( tauToken_, thePatTaus );
-    if( ! thePatTaus.isValid() )  ERR(IT_tau) ;
+        edm::Handle< std::vector<pat::Tau> > thePatTaus;
+        iEvent.getByToken( tauToken_, thePatTaus );
+        if( ! thePatTaus.isValid() )  ERR(IT_tau) ;
     //==================================
     
     
     //============ Rho ============
-    edm::Handle<double> rhoJets;
-    iEvent.getByToken(rhoToken_ , rhoJets);//kt6PFJets//edm::InputTag("fixedGridRhoFastjetAll","")
-    myRhoJets = *rhoJets;
+        edm::Handle<double> rhoJets;
+        iEvent.getByToken(rhoToken_ , rhoJets);//kt6PFJets//edm::InputTag("fixedGridRhoFastjetAll","")
+        myRhoJets = *rhoJets;
     //==================================
     
     //============ RhoNC ============
-    edm::Handle<double> rhoJetsNC;
-    iEvent.getByToken(fixedGridRhoToken_ , rhoJetsNC);//kt6PFJets //edm::InputTag("fixedGridRhoFastjetCentralNeutral","")
-    myRhoJetsNC = *rhoJetsNC;
+        edm::Handle<double> rhoJetsNC;
+        iEvent.getByToken(fixedGridRhoToken_ , rhoJetsNC);//kt6PFJets //edm::InputTag("fixedGridRhoFastjetCentralNeutral","")
+        myRhoJetsNC = *rhoJetsNC;
     //==================================
     
     
-    //in miniAOD v1
-    //double rawmetX = pfmet->shiftedP2_74x(pat::MET::METUncertainty(12),pat::MET::Raw).px;
-    //double rawmetY = pfmet->shiftedP2_74x(pat::MET::METUncertainty(12),pat::MET::Raw).py;
-    //double rawmetX = pfmet->shiftedP2_74x(pat::MET::METUncertainty(14),pat::MET::Raw).px;
-    //double rawmetY = pfmet->shiftedP2_74x(pat::MET::METUncertainty(14),pat::MET::Raw).py;
-    
-    //in miniAOD v2
-    double rawmetX = pfmet->uncorPx();
-    double rawmetY = pfmet->uncorPy();
-    
-    //double rawmetX = shiftedPt( pat::MET::METUncertainty::NoShift, pat::MET::METCorrectionLevel::Raw);
-    //double rawmetY = shiftedPhi( pat::MET::METUncertainty::NoShift, pat::MET::METCorrectionLevel::Raw);
-    
-    double corrMetx = rawmetX;
-    double corrMety = rawmetY;
-    
-    for( std::vector<pat::Jet>::const_iterator jet = (*thePatJets).begin(); jet != (*thePatJets).end(); jet++ ) {
-        TLorentzVector pJet;
-        pJet.SetPtEtaPhiE(((&*jet)->correctedP4("Uncorrected")).Pt(), ((&*jet)->correctedP4("Uncorrected")).Eta(),((&*jet)->correctedP4("Uncorrected")).Phi(), ((&*jet)->correctedP4("Uncorrected")).E());
-        
-        const std::vector<reco::CandidatePtr> & cands = (&*jet)->daughterPtrVector();
-        for ( std::vector<reco::CandidatePtr>::const_iterator cand = cands.begin();
-             cand != cands.end(); ++cand ) {
-            const reco::PFCandidate *pfcand = dynamic_cast<const reco::PFCandidate *>(cand->get());
-            const reco::Candidate *mu = (pfcand != 0 ? ( pfcand->muonRef().isNonnull() ? pfcand->muonRef().get() : 0) : cand->get());
-            if ( mu != 0  && ( mu->isGlobalMuon() || mu->isStandAloneMuon() ) ) {
-                //      reco::Candidate::LorentzVector muonP4 = (*cand)->p4();
-                TLorentzVector pMu;
-                pMu.SetPtEtaPhiE((*cand)->pt(),(*cand)->eta(),(*cand)->phi(),(*cand)->energy());
-                //      rawJetP4 -= muonP4;
-                //  cout << "mu found new method: "<< muonP4.Pt()<< ", "<<muonP4.Eta()<< ", "<<muonP4.Phi()<<endl;
-                pJet-= pMu;
-            }
-        }
-        
-        /*for(int unsigned it=0; it!=(&*jet)->numberOfDaughters(); ++it) {
-            const pat::PackedCandidate * icand = dynamic_cast<const pat::PackedCandidate *> ((&*jet)->daughter(it));
-            if(  fabs(icand->pdgId()) == 13 ) {
-                double mupt = icand->pt();
-                double muphi = icand->phi();
-                for( std::vector<pat::Muon>::const_iterator mu = (*thePatMuons).begin() ; mu != (*thePatMuons).end() ; mu++ ) {
-                    if ( (fabs(mu->pt() - mupt)/mupt < 0.1) && (fabs(mu->phi() - muphi) < 0.01)  ) {
-                        if (mu->isGlobalMuon() || mu->isStandAloneMuon()) {
-                            TLorentzVector pMu;
-                            pMu.SetPtEtaPhiE(mu->pt(),mu->eta(),mu->phi(),mu->energy());
-                            //pMu.SetPtEtaPhiE(icand->pt(),icand->eta(),icand->phi(),icand->energy());
-                            pJet-=pMu;
-                        }
-                    }
-                }
-            }
-        }*/
-        std::pair <double, double> corr = fMetCorrector->getCorrections(
-                                                                        ((&*jet)->correctedP4("Uncorrected")).Pt(),
-                                                                        ((&*jet)->correctedP4("Uncorrected")).Eta(),
-                                                                        pJet.Pt(),
-                                                                        pJet.Phi(),
-                                                                        (&*jet)->neutralEmEnergyFraction()+(&*jet)->chargedEmEnergyFraction(),
-                                                                        myRhoJets,
-                                                                        (&*jet)->jetArea());
-        corrMetx += corr.first ;
-        corrMety += corr.second;
-    }
-    double newmet    = sqrt(corrMetx*corrMetx + corrMety*corrMety);
-    double newmetphi = atan2(corrMety, corrMetx);
-    
-    //std::cout<<newmet<<" "<<_met<<"; "<<newmetphi<<" "<<_met_phi<<" "<<std::endl;
-    //std::cout<<std::endl;
-    _met = newmet;
-    _met_phi = newmetphi;
-    //if (_met < 30) return;
-    
-    
     //============ Conversions ============
-    edm::Handle< std::vector<reco::Conversion> > theConversions;
-    iEvent.getByToken(convToken_, theConversions);
+        edm::Handle< std::vector<reco::Conversion> > theConversions;
+        iEvent.getByToken(convToken_, theConversions);
     //==================================
     
     // Get MVA values and categories (optional)
     //============ MVA ============
-    edm::Handle<edm::ValueMap<float> > mvaValues;
-    edm::Handle<edm::ValueMap<int> > mvaCategories;
-    iEvent.getByToken(mvaValuesMapToken_,mvaValues);
-    iEvent.getByToken(mvaCategoriesMapToken_,mvaCategories);
-    
-    edm::Handle<edm::ValueMap<float> > mvaValuesHZZ;
-    edm::Handle<edm::ValueMap<int> > mvaCategoriesHZZ;
-    iEvent.getByToken(mvaValuesHZZMapToken_,mvaValuesHZZ);
-    iEvent.getByToken(mvaCategoriesHZZMapToken_,mvaCategoriesHZZ);
-    
+        edm::Handle<edm::ValueMap<float> > mvaValues;
+        edm::Handle<edm::ValueMap<int> > mvaCategories;
+        iEvent.getByToken(mvaValuesMapToken_,mvaValues);
+        iEvent.getByToken(mvaCategoriesMapToken_,mvaCategories);
+        
+        edm::Handle<edm::ValueMap<float> > mvaValuesHZZ;
+        edm::Handle<edm::ValueMap<int> > mvaCategoriesHZZ;
+        iEvent.getByToken(mvaValuesHZZMapToken_,mvaValuesHZZ);
+        iEvent.getByToken(mvaCategoriesHZZMapToken_,mvaCategoriesHZZ);    
     //==================================
     
-    enum decay {
+    enum decay {//origindetailed
         W_L,  // 0
         W_T_L, // 1
         W_B_L, // 2
@@ -726,35 +718,17 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         N_U_L_L // 19
     };
     
-    std::vector<const pat::Muon* > sMu = ssbLooseMuonSelector( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+    //zhud: original
+    //std::vector<const pat::Muon* > sMu = ssbLooseMuonSelector( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+    
+    //zhud: all Reco without preselection
+    std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+
+
+
+
     std::vector<const pat::Electron* > sEl = ssbMVAElectronSelector( *thePatElectrons, _minPt0, PV, _looseD0E, _chargeConsistency, theConversions, BS,
                                                                     false, false);
-    
-    //Taus
-    //edm::Handle<pat::TauCollection> PatTaus;
-    //iEvent.getByLabel( IT_tau, PatTaus );
-    
-    std::vector<const pat::Tau* > sTau;
-    std::vector<double > sTau_dz;
-    /*for (const pat::Tau &tau : *thePatTaus) {
-        if (tau.pt() < _tauPt) continue;
-        if (fabs(tau.eta()) > _tauEta) continue;
-        if (! (//tau.tauID("againstElectronLooseMVA6")
-               //&& tau.tauID("againstMuonLoose3")
-               //tau.tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT")//tau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT") //byLooseCombinedIsolationDeltaBetaCorr3Hits
-               tau.tauID("byVLooseIsolationMVArun2v1DBoldDMwLT")
-               && tau.tauID("decayModeFinding"))) continue; //decayModeFindingNewDMs
-        
-        Vertex::Point vertex = theVertices->begin()->position(); //PV
-        Vertex::Point vtx = (*(tau.leadChargedHadrCand())).vertex();
-        TLorentzVector p4; p4.SetPtEtaPhiE(tau.pt(),tau.eta(),tau.phi(),tau.energy());
-        double dzTau = (vtx.z()-vertex.z()) - ((vtx.x()-vertex.x())*p4.X()+(vtx.y()-vertex.y())*p4.Y())/ p4.Pt() *  p4.Z()/ p4.Pt();
-        //std::cout<<"tau sig "<<tau.dxy_Sig()<<std::endl;
-        //std::cout<<"tau dxy "<<tau.dxy()<<std::endl;
-        //std::cout<<"tau dz "<<dzTau<<std::endl;
-        sTau.push_back(&tau);
-        sTau_dz.push_back(dzTau);
-    }*/
     
     SelectedJetsAll = JetSelectorAll(*thePatJets, 5., 3.0);
     //std::vector<const pat::Jet* > SelectedJets = JetSelector(*thePatJets, _jetPtCut, _jetEtaCut);
@@ -762,11 +736,20 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
     
     //std::cout<<sEl.size() + sMu.size()<<std::endl;
     
-    if (sEl.size() + sMu.size() + sTau.size() < 3) return;
+    //zhud: for efficiency, comment this line out to also have events with < 3
+    //if (sEl.size() + sMu.size() + sTau.size() < 3) return;
     //std::cout<<sMu.size()<<" "<<sEl.size()<<std::endl;
     
+
+
     int leptonCounter = 0;
     //int i=0;
+    
+    
+
+    //**************************************************
+    //**********zhud: Analyzing Reco Muons**************
+    //**************************************************
     for(unsigned int i = 0 ; i < sMu.size() ;i++ ){
         //for (std::vector<pat::Muon>::const_iterator mu = thePatMuons->begin() ; mu != thePatMuons->end() ; mu++){
         //const pat::Muon *iM = &*mu;
@@ -802,18 +785,13 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         _mvaValue[leptonCounter] = -1;
         _muonSegmentComp[leptonCounter] = iM->segmentCompatibility();
         
+        
+        //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#Loose_Muon
+        //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#MediumID2016_to_be_used_with_Run
         bool goodGlb = iM->isGlobalMuon() && iM->globalTrack()->normalizedChi2() < 3
         && iM->combinedQuality().chi2LocalPosition < 12 && iM->combinedQuality().trkKink < 20;
         bool good = iM->innerTrack()->validFraction() >= 0.8 && iM->segmentCompatibility() >= (goodGlb ? 0.303 : 0.451);
     
-        
-        /*bool goodGlob = iM->isGlobalMuon() &&
-        iM->globalTrack()->normalizedChi2() < 3 &&
-        iM->combinedQuality().chi2LocalPosition < 12 &&
-        iM->combinedQuality().trkKink < 20;
-        bool good =
-        iM->innerTrack()->validFraction() > 0.49 &&
-        iM->segmentCompatibility() > (goodGlob ? 0.303 : 0.451);*/
         
         _istightID[leptonCounter] = good;
         
@@ -821,6 +799,11 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         
         _mt[leptonCounter] = MT_calc(*((TLorentzVector *)_leptonP4->At(leptonCounter)), _met, _met_phi);
         
+        _lMuPt[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Pt();
+        _lMuEta[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Eta();
+        _lMuPhi[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Phi();
+        _lMuE[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->E();
+
         _lPt[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Pt();
         _lEta[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Eta();
         _lPhi[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Phi();
@@ -864,9 +847,12 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
             && (_ptratio[leptonCounter] > _ptratiocut[_flavors[leptonCounter]]
                 || _ptrel[leptonCounter] > _ptrelcut[_flavors[leptonCounter]]));
         
+        
+        //cout<<"---zhud: found a reco muon with pt = "<< iM->pt() <<endl;
+
         if (Sample=="ElectronsMC") {
             //**************************************************************************************
-            // MC
+            // begin MC
             //**************************************************************************************
             
             const GenParticle* mc = GPM.matchedMC(iM, 13);
@@ -874,14 +860,17 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
             if ( mc!=0 ) {
                 fillMCVars(mc, leptonCounter);
                 _ipPVmc[leptonCounter] = TMath::Abs(iM->innerTrack()->dxy(PVmc));
-                
-                /*if (_origin[leptonCounter]==0) {
-                 std::cout<<"origin "<<_origin[leptonCounter]<<" "<<
-                 mc->isPromptFinalState()<<" "<<mc->fromHardProcessFinalState()
-                 <<std::endl;
-                 GPM.printInheritance(mc);
-                 }*/
-            }
+
+                //zhud: for the efficiency plots
+                if (fabs(mc->pdgId()) == 13){
+                    // _lMuPt[leptonCounter] = mc -> pt();
+                    if (GPM.fromID(&*mc,9900012)){
+                        _lHNLMuPtmc[leptonCounter] = mc->pt();
+                        //cout<<"---zhud: found a reco HNL->Mu with McPt = "<< mc->pt()<<endl;
+                        _nlHNLMu++;
+                    }       
+                }
+            }           
             else {
                 mc = GPM.matchedMC(iM);
                 if ( mc!=0 ) {
@@ -895,7 +884,6 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
                     //std::cout<<"No match mu"<<std::endl;
                     _originDetailed[leptonCounter] = -1;
                     _origin[leptonCounter] = 4;
-                    
                     _mompt[leptonCounter] = 0;
                     _momphi[leptonCounter] = 0;
                     _mometa[leptonCounter] = 0;
@@ -909,21 +897,13 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
             if (_closeIndex[leptonCounter] >=0)
                 matchCloseJet(leptonCounter);
             
-            if (_regression) {
-                std::vector <double> regVars = RegressionVars(SelectedJetsAll[_closeIndex[leptonCounter]], _closeJetPtAllMC[leptonCounter], iM);
-                for (int k=0; k!=15; ++k) {
-                    _regVars[k] = regVars[k];
-                }
-                _regVars[11] = fMetCorrector->getJECUncertainty(SelectedJetsAll[_closeIndex[leptonCounter]]->pt(),SelectedJetsAll[_closeIndex[leptonCounter]]->eta());
-            }
+            
             
             //**************************************************************************************
-            // MC *
+            // end MC *
             //**************************************************************************************
         }
         
-        if (_regression)
-            fillRegVars(SelectedJetsAll.at(_closeIndex[leptonCounter]), _closeJetPtAllMC[leptonCounter], iM);
         
         _mllZ[leptonCounter] = 9999.;
         _mllG[leptonCounter] = 9999.;
@@ -934,12 +914,21 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         leptonCounter++;
         
     }
+
+    //**************************************************
+    //******zhud: Finished Analyzing Reco Muons*********
+    //**************************************************
     
     _nMu = leptonCounter;
     //std::cout<<leptonCounter<<" "<<((TLorentzVector *)_leptonP4->At(leptonCounter))->Pt() <<std::endl;
     
     
     //for(unsigned int i = 0 ; i < sEl.size() ;i++ ){
+
+    //**************************************************
+    //**********zhud: Analyzing Reco Electrons**********
+    //**************************************************
+
     for (size_t i = 0; i < thePatElectronsView->size(); ++i){
         const auto iE = thePatElectronsView->ptrAt(i);
         if (!ssbMVAElectronSelectorPassed( iE, _minPt0, PV, _looseD0E, _chargeConsistency, theConversions, BS, false, false, false)) continue;
@@ -1131,8 +1120,6 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         }
         
         
-        if (_regression)
-            fillRegVars(SelectedJetsAll.at(_closeIndex[leptonCounter]), _closeJetPtAllMC[leptonCounter], &*iE);
         
         _mllZ[leptonCounter] = 9999.;
         _mllG[leptonCounter] = 9999.;
@@ -1140,157 +1127,27 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
         _mllGj[leptonCounter] = 9999.;
         _lepDeltaRloose[i] = 9999.;
 
-        leptonCounter++;
-        
+        leptonCounter++;     
     }
+    //**************************************************
+    //*******zhud: Finished Analyzing Reco Electrons****
+    //**************************************************
+
     _nEle = leptonCounter - _nMu;
     
-    for(unsigned int i = 0 ; i < sTau.size() ;i++ ){
-        const pat::Tau *iT = sTau[i];
-        
-        if (leptonCounter == nLeptonsMax) continue;
-        _flavors[leptonCounter] = 2;
-        _charges[leptonCounter] = iT->charge();
-        _isolation[leptonCounter][0] = 0;
-        _ipPV[leptonCounter] = iT->dxy();
-        _ipZPV[leptonCounter] = sTau_dz[i];
-        
-        ((TLorentzVector *)_leptonP4->At(leptonCounter))->SetPtEtaPhiE(iT->pt(), iT->eta(), iT->phi(), iT->energy());
-        
-        double minDeltaR = 9999;
-        for (int j=0; j!=_nMu+_nEle; ++j) {
-            _lepDeltaR[leptonCounter][j] = ((TLorentzVector *)_leptonP4->At(j))->DeltaR( *((TLorentzVector *)_leptonP4->At(leptonCounter)) );
-            if (_lepDeltaR[leptonCounter][j] < minDeltaR && _islooseID[j])
-                minDeltaR = _lepDeltaR[leptonCounter][j];
-        }
-        if (minDeltaR < 0.4) continue;
-        
-        _mt[leptonCounter] = MT_calc(*((TLorentzVector *)_leptonP4->At(leptonCounter)), _met, _met_phi);
-        
-        _lPt[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Pt();
-        _lEta[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Eta();
-        _lPhi[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Phi();
-        _lE[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->E();
-        
-        _3dIP[leptonCounter]    = sqrt(iT->dxy()*iT->dxy() + sTau_dz[i]*sTau_dz[i]);
-        _3dIPerr[leptonCounter] = sqrt(iT->dxy_error()*iT->dxy_error() + iT->dzError()*iT->dzError());
-        _3dIPsig[leptonCounter] = _3dIP[leptonCounter]/_3dIPerr[leptonCounter];
-        
-        _isloose[leptonCounter] = iT->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-        _istightID[leptonCounter] = iT->tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-        //_istightID[leptonCounter] = iT->tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
-        
-
-        
-        _tauIDold[leptonCounter][0] = iT->tauID("byVLooseIsolationMVArun2v1DBoldDMwLT");
-        _tauIDold[leptonCounter][1] = iT->tauID("byLooseIsolationMVArun2v1DBoldDMwLT");
-        _tauIDold[leptonCounter][2] = iT->tauID("byMediumIsolationMVArun2v1DBoldDMwLT");
-        _tauIDold[leptonCounter][3] = iT->tauID("byTightIsolationMVArun2v1DBoldDMwLT");
-        _tauIDold[leptonCounter][4] = iT->tauID("byVTightIsolationMVArun2v1DBoldDMwLT");
-
-        _tauIDnew[leptonCounter][0] = iT->tauID("byVLooseIsolationMVArun2v1DBnewDMwLT");
-        _tauIDnew[leptonCounter][1] = iT->tauID("byLooseIsolationMVArun2v1DBnewDMwLT");
-        _tauIDnew[leptonCounter][2] = iT->tauID("byMediumIsolationMVArun2v1DBnewDMwLT");
-        _tauIDnew[leptonCounter][3] = iT->tauID("byTightIsolationMVArun2v1DBnewDMwLT");
-        _tauIDnew[leptonCounter][4] = iT->tauID("byVTightIsolationMVArun2v1DBnewDMwLT");
-        
-        
-        _tauID03[leptonCounter][0] = iT->tauID("byLooseIsolationMVArun2v1DBdR03oldDMwLT");
-        _tauID03[leptonCounter][1] = iT->tauID("byMediumIsolationMVArun2v1DBdR03oldDMwLT");
-        _tauID03[leptonCounter][2] = iT->tauID("byTightIsolationMVArun2v1DBdR03oldDMwLT");
-        _tauID03[leptonCounter][3] = iT->tauID("byVTightIsolationMVArun2v1DBdR03oldDMwLT");
-        
-        _tauDecMode[leptonCounter][0] = iT->tauID("decayModeFinding");
-        _tauDecMode[leptonCounter][1] = iT->tauID("decayModeFindingNewDMs");
-        
-        _tauIDeleVeto[leptonCounter][0] = iT->tauID("againstElectronVLooseMVA6");
-        _tauIDeleVeto[leptonCounter][1] = iT->tauID("againstElectronLooseMVA6");
-        _tauIDeleVeto[leptonCounter][2] = iT->tauID("againstElectronMediumMVA6");
-        _tauIDeleVeto[leptonCounter][3] = iT->tauID("againstElectronTightMVA6");
-        _tauIDeleVeto[leptonCounter][4] = iT->tauID("againstElectronVTightMVA6");
-
-        _tauIDmuVeto[leptonCounter][0] = iT->tauID("againstMuonLoose3");
-        _tauIDmuVeto[leptonCounter][1] = iT->tauID("againstMuonTight3");
-        
-        fillCloseJetVars(leptonCounter);
-        
-        if (Sample=="ElectronsMC") {
-            //**************************************************************************************
-            // MC
-            //**************************************************************************************
-            //std::cout<<_eventNb<<std::endl;
-            _tauDeltaR[leptonCounter] = matchCloseParticle(leptonCounter, 15);
-            const GenParticle* mc = GPM.matchedMC(&*iT, 15);
-            if ( mc!=0 ) {
-                fillMCVars(mc, leptonCounter);
-                //if (_origin[leptonCounter]==0 && (_charges[leptonCounter]!=_chargesMC[leptonCounter])) {
-                /*std::cout<<"charge "<<_charges[leptonCounter]<<"; origin "<<_origin[leptonCounter]<<"; originReduced "<<
-                 _originDetailed[leptonCounter]<<"; "<<
-                 mc->isPromptFinalState()<<" "<<mc->fromHardProcessFinalState()
-                 <<std::endl;
-                 std::cout<<_lPt[leptonCounter]<<" "<<mc->pt()<<std::endl;
-                 GPM.printInheritance(mc);*/
-                 //}
-            }
-            else {
-                mc = GPM.matchedMC(&*iT);
-                if ( mc!=0 ) {
-                    fillMCVars(mc, leptonCounter);
-                    
-                    if (_origin[leptonCounter] == 0 && fabs(_mompdg[leptonCounter])!=15) {
-                        _origin[leptonCounter] = GPM.originReduced(_originDetailed[leptonCounter]);
-                        if (_origin[leptonCounter] == 0)
-                            _origin[leptonCounter] = 3;
-                    }
-                    
-                     /*std::cout<<"did not find normal: "<<std::endl;
-                     std::cout<<"charge "<<_charges[leptonCounter]<<"; origin "<<_origin[leptonCounter]<<"; originReduced "<<
-                     _originDetailed[leptonCounter]<<"; "<<
-                     mc->isPromptFinalState()<<" "<<mc->fromHardProcessFinalState()
-                     <<std::endl;
-                     
-                     std::cout<<_lPt[leptonCounter]<<" "<<mc->pt()<<std::endl;
-                     GPM.printInheritance(mc);*/
-                    
-                    /*
-                     did not find normal:
-                     charge -1; origin 3; originReduced 17; 1 1
-                     30.4368 31.791
-                     gamma (1)     <--  gamma (23)     <--   MANY 21(0), -4(0), )
-                     */
-                    
-                } else {
-                    _originDetailed[leptonCounter] = -1;
-                    _origin[leptonCounter] = 4;
-                    _mompt[leptonCounter] = 0;
-                    _momphi[leptonCounter] = 0;
-                    _mometa[leptonCounter] = 0;
-                    _mompdg[leptonCounter] = 0;
-                }
-            }
-
-
-        }
-        _mllZ[leptonCounter] = 9999.;
-        _mllG[leptonCounter] = 9999.;
-        _mllZj[leptonCounter] = 9999.;
-        _mllGj[leptonCounter] = 9999.;
-        _lepDeltaRloose[i] = 9999.;
-        
-        leptonCounter++;
-        
-    }
+    
     
     _nTau = leptonCounter - _nMu - _nEle;
     
     _nLeptons = leptonCounter;
-    if (leptonCounter < 3) return;
+    //if (leptonCounter < 3) return;     //zhud: for efficiency calculations, comment this line out to also have events with < 3
     
     _n_Jets = 0;
     _n_bJets = 0;
     _n_Jets30 = 0;
     _HT = 0;
     TLorentzVector jt;
+    
     for(unsigned int i = 0 ; i < SelectedJets.size() ;i++ ){
         if (fabs(SelectedJets[i]->eta()) > 2.4) continue;
         
@@ -1367,7 +1224,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup)
     for (int i=0; i!=_nLeptons; ++i) for (int j=0; j!=_nLeptons; ++j) {
         _mll[i][j] =  Mll_calc( *((TLorentzVector*)_leptonP4->At(i)), *((TLorentzVector*)_leptonP4->At(j)));
     }
-    
+
     outputTree->Fill();
     
     
@@ -1380,6 +1237,7 @@ void HNL::fillMCVars(const GenParticle* mc, const int leptonCounter) {
     _lPhimc[leptonCounter] = mc->phi();
     _lEtamc[leptonCounter] = mc->eta();
     _pdgmc[leptonCounter] = mc->pdgId();
+
     
     _chargesMC[leptonCounter] = mc->charge();
     
@@ -1471,6 +1329,7 @@ void HNL::fillMCVars(const GenParticle* mc, const int leptonCounter) {
     }
     
 }
+
 void HNL::fillCloseJetVars(const int leptonCounter) {
     _closeJetPtAll[leptonCounter] = ((TLorentzVector *)_leptonP4->At(leptonCounter))->Pt();
     _closeJetAngAll[leptonCounter] = 10000;
@@ -1735,8 +1594,7 @@ double HNL::lepMVAvalue(const int leptonCounter) {
     LepGood_mvaIdSpring15 = _mvaValue[leptonCounter];
     LepGood_segmentCompatibility = _muonSegmentComp[leptonCounter];
     
-    return reader[_flavors[leptonCounter]]->EvaluateMVA( "BDTG method" );
-    
+    return reader[_flavors[leptonCounter]]->EvaluateMVA( "BDTG method" );  
 }
 
 
@@ -1887,6 +1745,12 @@ void HNL::bookTree() {
     outputTree->Branch("_eventNb",   &_eventNb,   "_eventNb/l");
     outputTree->Branch("_runNb",     &_runNb,     "_runNb/l");
     outputTree->Branch("_lumiBlock", &_lumiBlock, "_lumiBlock/l");
+
+    outputTree->Branch("_nGenLep", &_nGenLep, "_nGenLep/I");
+    outputTree->Branch("_nGenE", &_nGenE, "_nGenE/I");
+    outputTree->Branch("_nGenMu", &_nGenMu, "_nGenMu/I");
+    outputTree->Branch("_nGenStatusNot1", &_nGenStatusNot1, "_nGenStatusNot1/I");
+    outputTree->Branch("_nGenHNL",&_nGenHNL,"_nGenHNL/I");
     
     outputTree->Branch("mChi20", &mChi20, "mChi20/D");
     outputTree->Branch("mChi10", &mChi10, "mChi10/D");
@@ -1895,6 +1759,16 @@ void HNL::bookTree() {
     outputTree->Branch("_genHT", &_genHT, "_genHT/D");
     outputTree->Branch("_nLeptons", &_nLeptons, "_nLeptons/I");
     
+
+    //zhud: For the Efficiency measurement
+    outputTree->Branch("_nGenHNLMu", &_nGenHNLMu,"_nGenHNLMu/I");
+    outputTree->Branch("_nlHNLMu", &_nlHNLMu,"_nlHNLMu/I");
+    outputTree->Branch("_GenHNLMuPt", &_GenHNLMuPt,"_GenHNLMuPt[_nGenLep]/D");
+    outputTree->Branch("_lHNLMuPtmc", &_lHNLMuPtmc, "_lHNLMuPtmc[_nLeptons]/D");
+    outputTree->Branch("_lMuPt", &_lMuPt, "_lMuPt[_nLeptons]/D");
+    outputTree->Branch("_GenMuPt", &_GenMuPt, "_GenMuPt[_nGenLep]/D");
+
+
     outputTree->Branch("_nEle", &_nEle, "_nEle/I");
     outputTree->Branch("_nMu", &_nMu, "_nMu/I");
     outputTree->Branch("_nTau", &_nTau, "_nTau/I");
@@ -1928,7 +1802,7 @@ void HNL::bookTree() {
     
     
     
-    /*outputTree->Branch("_lPtmc", &_lPtmc, "_lPtmc[_nLeptons]/D");
+     outputTree->Branch("_lPtmc", &_lPtmc, "_lPtmc[_nLeptons]/D");
      outputTree->Branch("_lEtamc", &_lEtamc, "_lEtamc[_nLeptons]/D");
      outputTree->Branch("_lPhimc", &_lPhimc, "_lPhimc[_nLeptons]/D");
      outputTree->Branch("_lEmc", &_lEmc, "_lEmc[_nLeptons]/D");
@@ -1938,26 +1812,29 @@ void HNL::bookTree() {
      outputTree->Branch("_nuPhimc", &_nuPhimc, "_nuPhimc[_nLeptons]/D");
      outputTree->Branch("_nuEmc", &_nuEmc, "_nuEmc[_nLeptons]/D");
      
-     outputTree->Branch("_mtmc", &_mtmc, "_mtmc[_nLeptons]/D");*/
-    
-    outputTree->Branch("_triggers2l", &_triggers2l, "_triggers2l[2][6]/O");
-    outputTree->Branch("_triggers2lbkp", &_triggers2lbkp, "_triggers2lbkp[2][6]/O");
-    outputTree->Branch("_triggersCS", &_triggersCS, "_triggersCS[5][5]/O");
-    outputTree->Branch("_triggersCSb", &_triggersCSb, "_triggersCSb[2]/O");
-    outputTree->Branch("_triggers1l", &_triggers1l, "_triggers1l[8]/O");
-    outputTree->Branch("_triggersTau", &_triggersTau, "_triggersTau[6]/O");
-    outputTree->Branch("_triggersPost", &_triggersPost, "_triggersPost[20]/O");
+     outputTree->Branch("_mtmc", &_mtmc, "_mtmc[_nLeptons]/D");
+
+
 
     
-    outputTree->Branch("Flag_eeBadScFilter", &Flag_eeBadScFilter, "Flag_eeBadScFilter/O");
-    outputTree->Branch("Flag_HBHENoiseFilter", &Flag_HBHENoiseFilter, "Flag_HBHENoiseFilter/O");
-    outputTree->Branch("Flag_HBHENoiseIsoFilter", &Flag_HBHENoiseIsoFilter, "Flag_HBHENoiseIsoFilter/O");
-    outputTree->Branch("Flag_globalTightHalo2016Filter", &Flag_globalTightHalo2016Filter, "Flag_globalTightHalo2016Filter/O");
-    outputTree->Branch("Flag_CSCTightHalo2015Filter", &Flag_CSCTightHalo2015Filter, "Flag_CSCTightHalo2015Filter/O");
-    outputTree->Branch("Flag_EcalDeadCellTriggerPrimitiveFilter", &Flag_EcalDeadCellTriggerPrimitiveFilter, "Flag_EcalDeadCellTriggerPrimitiveFilter/O");
-    outputTree->Branch("Flag_goodVertices", &Flag_goodVertices, "Flag_goodVertices/O");
-    outputTree->Branch("filterbadChCandidate", &filterbadChCandidate, "filterbadChCandidate/O");
-    outputTree->Branch("filterbadPFMuon", &filterbadPFMuon, "filterbadPFMuon/O");
+    // outputTree->Branch("_triggers2l", &_triggers2l, "_triggers2l[2][6]/O");
+    // outputTree->Branch("_triggers2lbkp", &_triggers2lbkp, "_triggers2lbkp[2][6]/O");
+    // outputTree->Branch("_triggersCS", &_triggersCS, "_triggersCS[5][5]/O");
+    // outputTree->Branch("_triggersCSb", &_triggersCSb, "_triggersCSb[2]/O");
+    // outputTree->Branch("_triggers1l", &_triggers1l, "_triggers1l[8]/O");
+    // //outputTree->Branch("_triggersTau", &_triggersTau, "_triggersTau[6]/O");
+    // outputTree->Branch("_triggersPost", &_triggersPost, "_triggersPost[20]/O");
+
+    
+    // outputTree->Branch("Flag_eeBadScFilter", &Flag_eeBadScFilter, "Flag_eeBadScFilter/O");
+    // outputTree->Branch("Flag_HBHENoiseFilter", &Flag_HBHENoiseFilter, "Flag_HBHENoiseFilter/O");
+    // outputTree->Branch("Flag_HBHENoiseIsoFilter", &Flag_HBHENoiseIsoFilter, "Flag_HBHENoiseIsoFilter/O");
+    // outputTree->Branch("Flag_globalTightHalo2016Filter", &Flag_globalTightHalo2016Filter, "Flag_globalTightHalo2016Filter/O");
+    // outputTree->Branch("Flag_CSCTightHalo2015Filter", &Flag_CSCTightHalo2015Filter, "Flag_CSCTightHalo2015Filter/O");
+    // outputTree->Branch("Flag_EcalDeadCellTriggerPrimitiveFilter", &Flag_EcalDeadCellTriggerPrimitiveFilter, "Flag_EcalDeadCellTriggerPrimitiveFilter/O");
+    // outputTree->Branch("Flag_goodVertices", &Flag_goodVertices, "Flag_goodVertices/O");
+    // outputTree->Branch("filterbadChCandidate", &filterbadChCandidate, "filterbadChCandidate/O");
+    // outputTree->Branch("filterbadPFMuon", &filterbadPFMuon, "filterbadPFMuon/O");
     
     outputTree->Branch("_isolation", &_isolation, "_isolation[_nLeptons][2]/D");
     outputTree->Branch("_miniisolation", &_miniisolation, "_miniisolation[_nLeptons][3]/D");
@@ -2009,113 +1886,84 @@ void HNL::bookTree() {
 
     
     
-    outputTree->Branch("_mt", &_mt, "_mt[_nLeptons]/D");
-    outputTree->Branch("_mllZ", &_mllZ, "_mllZ[_nLeptons]/D");
-    outputTree->Branch("_mllG", &_mllG, "_mllG[_nLeptons]/D");
-    outputTree->Branch("_mllZj", &_mllZj, "_mllZj[_nLeptons]/D");
-    outputTree->Branch("_mllGj", &_mllGj, "_mllGj[_nLeptons]/D");
-    outputTree->Branch("_mll", &_mll, "_mll[_nLeptons][10]/D");
-    outputTree->Branch("_lepDeltaRloose", &_lepDeltaRloose, "_lepDeltaRloose[_nLeptons]/D");
-    outputTree->Branch("_lepDeltaR", &_lepDeltaR, "_lepDeltaR[_nLeptons][10]/D");
+    // outputTree->Branch("_mt", &_mt, "_mt[_nLeptons]/D");
+    // outputTree->Branch("_mllZ", &_mllZ, "_mllZ[_nLeptons]/D");
+    // outputTree->Branch("_mllG", &_mllG, "_mllG[_nLeptons]/D");
+    // outputTree->Branch("_mllZj", &_mllZj, "_mllZj[_nLeptons]/D");
+    // outputTree->Branch("_mllGj", &_mllGj, "_mllGj[_nLeptons]/D");
+    // outputTree->Branch("_mll", &_mll, "_mll[_nLeptons][10]/D");
+    // outputTree->Branch("_lepDeltaRloose", &_lepDeltaRloose, "_lepDeltaRloose[_nLeptons]/D");
+    // outputTree->Branch("_lepDeltaR", &_lepDeltaR, "_lepDeltaR[_nLeptons][10]/D");
     
     
-    outputTree->Branch("_tauIDold", &_tauIDold, "_tauIDold[_nLeptons][5]/O");
-    outputTree->Branch("_tauIDnew", &_tauIDnew, "_tauIDnew[_nLeptons][5]/O");
-    outputTree->Branch("_tauID03", &_tauID03, "_tauID03[_nLeptons][4]/O");
+    // outputTree->Branch("_tauIDold", &_tauIDold, "_tauIDold[_nLeptons][5]/O");
+    // outputTree->Branch("_tauIDnew", &_tauIDnew, "_tauIDnew[_nLeptons][5]/O");
+    // outputTree->Branch("_tauID03", &_tauID03, "_tauID03[_nLeptons][4]/O");
 
-    outputTree->Branch("_tauIDeleVeto", &_tauIDeleVeto, "_tauIDeleVeto[_nLeptons][5]/O");
-    outputTree->Branch("_tauIDmuVeto", &_tauIDmuVeto, "_tauIDmuVeto[_nLeptons][2]/O");
-    outputTree->Branch("_tauDeltaR", &_tauDeltaR, "_tauDeltaR[_nLeptons]/D");
+    // outputTree->Branch("_tauIDeleVeto", &_tauIDeleVeto, "_tauIDeleVeto[_nLeptons][5]/O");
+    // outputTree->Branch("_tauIDmuVeto", &_tauIDmuVeto, "_tauIDmuVeto[_nLeptons][2]/O");
+    // outputTree->Branch("_tauDeltaR", &_tauDeltaR, "_tauDeltaR[_nLeptons]/D");
 
     
-    outputTree->Branch("_isloose", &_isloose, "_isloose[_nLeptons]/O");
-    outputTree->Branch("_istight", &_istight, "_istight[_nLeptons]/O");
-    outputTree->Branch("_istightID", &_istightID, "_istightID[_nLeptons]/O");
-    outputTree->Branch("_istightIso", &_istightIso, "_istightIso[_nLeptons]/O");
-    outputTree->Branch("_triggerMatch", &_triggerMatch, "_triggerMatch[_nLeptons]/O");
-    outputTree->Branch("_triggerIsoMatch", &_triggerIsoMatch, "_triggerIsoMatch[_nLeptons]/O");
+    // outputTree->Branch("_isloose", &_isloose, "_isloose[_nLeptons]/O");
+    // outputTree->Branch("_istight", &_istight, "_istight[_nLeptons]/O");
+    // outputTree->Branch("_istightID", &_istightID, "_istightID[_nLeptons]/O");
+    // outputTree->Branch("_istightIso", &_istightIso, "_istightIso[_nLeptons]/O");
+    // outputTree->Branch("_triggerMatch", &_triggerMatch, "_triggerMatch[_nLeptons]/O");
+    // outputTree->Branch("_triggerIsoMatch", &_triggerIsoMatch, "_triggerIsoMatch[_nLeptons]/O");
     
     outputTree->Branch("_ptrel", &_ptrel, "_ptrel[_nLeptons]/D");
     //outputTree->Branch("_ptrel2", &_ptrel2, "_ptrel2[_nLeptons]/D");
     outputTree->Branch("_ptratio", &_ptratio, "_ptratio[_nLeptons]/D");
     
-    outputTree->Branch("_closeJetPtAll", &_closeJetPtAll, "_closeJetPtAll[_nLeptons]/D");
-    outputTree->Branch("_closeJetEtaAll", &_closeJetEtaAll, "_closeJetEtaAll[_nLeptons]/D");
-    outputTree->Branch("_closeJetPhiAll", &_closeJetPhiAll, "_closeJetPhiAll[_nLeptons]/D");
-    outputTree->Branch("_closeJetCSVAll", &_closeJetCSVAll, "_closeJetCSVAll[_nLeptons]/D");
-    outputTree->Branch("_closeJetNconstAll", &_closeJetNconstAll, "_closeJetNconstAll[_nLeptons]/I");
-    outputTree->Branch("_closeJetAngAll", &_closeJetAngAll, "_closeJetAngAll[_nLeptons]/D");
-    outputTree->Branch("_ptRelAll", &_ptRelAll, "_ptRelAll[_nLeptons]/D");
+    // outputTree->Branch("_closeJetPtAll", &_closeJetPtAll, "_closeJetPtAll[_nLeptons]/D");
+    // outputTree->Branch("_closeJetEtaAll", &_closeJetEtaAll, "_closeJetEtaAll[_nLeptons]/D");
+    // outputTree->Branch("_closeJetPhiAll", &_closeJetPhiAll, "_closeJetPhiAll[_nLeptons]/D");
+    // outputTree->Branch("_closeJetCSVAll", &_closeJetCSVAll, "_closeJetCSVAll[_nLeptons]/D");
+    // outputTree->Branch("_closeJetNconstAll", &_closeJetNconstAll, "_closeJetNconstAll[_nLeptons]/I");
+    // outputTree->Branch("_closeJetAngAll", &_closeJetAngAll, "_closeJetAngAll[_nLeptons]/D");
+    // outputTree->Branch("_ptRelAll", &_ptRelAll, "_ptRelAll[_nLeptons]/D");
     
     
-    outputTree->Branch("_closeJetPtAllMC", &_closeJetPtAllMC, "_closeJetPtAllMC[_nLeptons]/D");
-    outputTree->Branch("_closeJetPtAllstatus", &_closeJetPtAllstatus, "_closeJetPtAllstatus[_nLeptons]/D");
-    outputTree->Branch("_partonIdMatched", &_partonIdMatched, "_partonIdMatched[_nLeptons]/I");
-    outputTree->Branch("_sameParton", &_sameParton, "_sameParton[_nLeptons]/O");
-    
-    if (_regression) {
-        outputTree->Branch("_regVars", &_regVars, "_regVars[15]/D");
-        
-        outputTree->Branch("hJet_ptRaw", &hJet_ptRaw, "hJet_ptRaw/D");
-        outputTree->Branch("hJet_genPt", &hJet_genPt, "hJet_genPt/D");
-        outputTree->Branch("hJet_pt", &hJet_pt, "hJet_pt/D");
-        outputTree->Branch("hJet_phi", &hJet_phi, "hJet_phi/D");
-        outputTree->Branch("hJet_eta", &hJet_eta, "hJet_eta/D");
-        outputTree->Branch("hJet_e", &hJet_e, "hJet_e/D");
-        
-        outputTree->Branch("hJet_ptLeadTrack", &hJet_ptLeadTrack, "hJet_ptLeadTrack/D");
-        
-        outputTree->Branch("hJet_vtx3dL", &hJet_vtx3dL, "hJet_vtx3dL/D");
-        outputTree->Branch("hJet_vtx3deL", &hJet_vtx3deL, "hJet_vtx3deL/D");
-        outputTree->Branch("hJet_vtxMass", &hJet_vtxMass, "hJet_vtxMass/D");
-        outputTree->Branch("hJet_vtxPt", &hJet_vtxPt, "hJet_vtxPt/D");
-        
-        outputTree->Branch("hJet_cef", &hJet_cef, "hJet_cef/D");
-        
-        outputTree->Branch("hJet_nconstituents", &hJet_nconstituents, "hJet_nconstituents/D");
-        outputTree->Branch("hJet_JECUnc", &hJet_JECUnc, "hJet_JECUnc/D");
-        
-        outputTree->Branch("hJet_SoftLeptptRel", &hJet_SoftLeptptRel, "hJet_SoftLeptptRel/D");
-        outputTree->Branch("hJet_SoftLeptPt", &hJet_SoftLeptPt, "hJet_SoftLeptPt/D");
-        outputTree->Branch("hJet_SoftLeptdR", &hJet_SoftLeptdR, "hJet_SoftLeptdR/D");
-        
-        outputTree->Branch("hJet_SoftLeptIdlooseMu", &hJet_SoftLeptIdlooseMu, "hJet_SoftLeptIdlooseMu/D");
-        outputTree->Branch("hJet_SoftLeptId95", &hJet_SoftLeptId95, "hJet_SoftLeptId95/D");
-    }
-    
-    outputTree->Branch("_n_PV", &_n_PV, "_n_PV/I");
-    outputTree->Branch("_n_Interactions", &_n_Interactions, "_n_Interactions/I");
-    outputTree->Branch("_n_trueInteractions", &_n_trueInteractions, "_n_trueInteractions/D");
+    // outputTree->Branch("_closeJetPtAllMC", &_closeJetPtAllMC, "_closeJetPtAllMC[_nLeptons]/D");
+    // outputTree->Branch("_closeJetPtAllstatus", &_closeJetPtAllstatus, "_closeJetPtAllstatus[_nLeptons]/D");
+    // outputTree->Branch("_partonIdMatched", &_partonIdMatched, "_partonIdMatched[_nLeptons]/I");
+    // outputTree->Branch("_sameParton", &_sameParton, "_sameParton[_nLeptons]/O");
     
     
-    outputTree->Branch("_met", &_met, "_met/D");
-    outputTree->Branch("_met_phi", &_met_phi, "_met_phi/D");
-    outputTree->Branch("_HT", &_HT, "_HT/D");
-    
-    outputTree->Branch("_genmet", &_genmet, "_genmet/D");
-    outputTree->Branch("_genmet_phi", &_genmet_phi, "_genmet_phi/D");
-    
-    outputTree->Branch("_mompt", &_mompt, "_mompt[_nLeptons]/D");
-    outputTree->Branch("_momphi", &_momphi, "_momphi[_nLeptons]/D");
-    outputTree->Branch("_mometa", &_mometa, "_mometa[_nLeptons]/D");
-    outputTree->Branch("_mompdg", &_mompdg, "_mompdg[_nLeptons]/I");
-    
-    outputTree->Branch("_n_bJets", &_n_bJets, "_n_bJets/I");
-    outputTree->Branch("_n_Jets", &_n_Jets, "_n_Jets/I");
-    outputTree->Branch("_n_Jets30", &_n_Jets30, "_n_Jets30/I");
-    outputTree->Branch("_bTagged", &_bTagged, "_bTagged[_n_Jets]/O");
-    outputTree->Branch("_jetEta", &_jetEta, "_jetEta[_n_Jets]/D");
-    outputTree->Branch("_jetPhi", &_jetPhi, "_jetPhi[_n_Jets]/D");
-    outputTree->Branch("_jetPt", &_jetPt, "_jetPt[_n_Jets]/D");
-    outputTree->Branch("_jetM", &_jetM, "_jetM[_n_Jets]/D");
-    outputTree->Branch("_jetE", &_jetE, "_jetE[_n_Jets]/D");
-    outputTree->Branch("_jethFlav", &_jethFlav, "_jethFlav[_n_Jets]/I");
-    outputTree->Branch("_jetpFlav", &_jetpFlav, "_jetpFlav[_n_Jets]/I");
+    // outputTree->Branch("_n_PV", &_n_PV, "_n_PV/I");
+    // outputTree->Branch("_n_Interactions", &_n_Interactions, "_n_Interactions/I");
+    // outputTree->Branch("_n_trueInteractions", &_n_trueInteractions, "_n_trueInteractions/D");
     
     
-    outputTree->Branch("_csv", &_csv, "_csv[_n_Jets]/D");
-    outputTree->Branch("_jetDeltaR", &_jetDeltaR, "_jetDeltaR[_n_Jets][10]/D");
-    outputTree->Branch("_jetDeltaRloose", &_jetDeltaRloose, "_jetDeltaRloose[_n_Jets]/D");
+    // outputTree->Branch("_met", &_met, "_met/D");
+    // outputTree->Branch("_met_phi", &_met_phi, "_met_phi/D");
+    // outputTree->Branch("_HT", &_HT, "_HT/D");
+    
+    // outputTree->Branch("_genmet", &_genmet, "_genmet/D");
+    // outputTree->Branch("_genmet_phi", &_genmet_phi, "_genmet_phi/D");
+    
+    // outputTree->Branch("_mompt", &_mompt, "_mompt[_nLeptons]/D");
+    // outputTree->Branch("_momphi", &_momphi, "_momphi[_nLeptons]/D");
+    // outputTree->Branch("_mometa", &_mometa, "_mometa[_nLeptons]/D");
+    // outputTree->Branch("_mompdg", &_mompdg, "_mompdg[_nLeptons]/I");
+    
+    // outputTree->Branch("_n_bJets", &_n_bJets, "_n_bJets/I");
+    // outputTree->Branch("_n_Jets", &_n_Jets, "_n_Jets/I");
+    // outputTree->Branch("_n_Jets30", &_n_Jets30, "_n_Jets30/I");
+    // outputTree->Branch("_bTagged", &_bTagged, "_bTagged[_n_Jets]/O");
+    // outputTree->Branch("_jetEta", &_jetEta, "_jetEta[_n_Jets]/D");
+    // outputTree->Branch("_jetPhi", &_jetPhi, "_jetPhi[_n_Jets]/D");
+    // outputTree->Branch("_jetPt", &_jetPt, "_jetPt[_n_Jets]/D");
+    // outputTree->Branch("_jetM", &_jetM, "_jetM[_n_Jets]/D");
+    // outputTree->Branch("_jetE", &_jetE, "_jetE[_n_Jets]/D");
+    // outputTree->Branch("_jethFlav", &_jethFlav, "_jethFlav[_n_Jets]/I");
+    // outputTree->Branch("_jetpFlav", &_jetpFlav, "_jetpFlav[_n_Jets]/I");
+    
+    
+    // outputTree->Branch("_csv", &_csv, "_csv[_n_Jets]/D");
+    // outputTree->Branch("_jetDeltaR", &_jetDeltaR, "_jetDeltaR[_n_Jets][10]/D");
+    // outputTree->Branch("_jetDeltaRloose", &_jetDeltaRloose, "_jetDeltaRloose[_n_Jets]/D");
     
     
     

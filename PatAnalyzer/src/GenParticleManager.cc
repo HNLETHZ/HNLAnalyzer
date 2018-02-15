@@ -218,8 +218,7 @@ void GenParticleManager::printInheritance(const GenParticle* p)
         }
         mom = getMother(mom);
     }
-    cout << endl;
-    
+    cout << endl;   
 }
 
 bool GenParticleManager::SameMother(const  GenParticle* p,  const GenParticle* part)
@@ -579,6 +578,24 @@ int GenParticleManager::originReduced(int origin) {
  F_L, //18
  N_U_L_L // 19
  */
+
+//zhud: Assign Recomuon to a Genmuon
+// const GenParticle* GenParticleManager::matchedreco(const GenParticle *p){
+    
+// }
+
+
+// const GenParticle* GenParticleManager::getMother(const GenParticle *p)
+// {
+    
+//     if( p->numberOfMothers() == 0 )
+//     {
+//         //cerr<<"[ERROR] Trying to access mother of particle that has no mother" << endl;
+//         return NULL;
+//     }
+//     return &(*_Collection.product())[p->motherRef(0).key()];
+// }
+
 
 const GenParticle* GenParticleManager::matchedMC(const pat::Muon *pReco) {
     const GenParticle* mom = 0;
