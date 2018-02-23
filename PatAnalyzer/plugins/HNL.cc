@@ -261,6 +261,13 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
                 //==================================
 
+
+                //============ Pat displacedStandAloneMuons ============
+                edm::Handle< std::vector<pat::Muon> > theDisplacedStandAloneMuons;
+                iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
+                if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
+                //======================================================
+
                 int GenParticlecounter = 0;            
                 
 
@@ -290,6 +297,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 }
                 
                 std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+                std::vector<const pat::Muon* > sDisplacedStandAloneMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
+
                 for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
                     
                     //cout << "------------------------------------------------------------------"<< endl;
@@ -703,6 +712,12 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
         if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
     //==================================
     
+    //============ Pat displacedStandAloneMuons ============
+    edm::Handle< std::vector<pat::Muon> > theDisplacedStandAloneMuons;
+    iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
+    if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
+    //======================================================
+
     //============ Pat Electrons ============
         edm::Handle< std::vector<pat::Electron> > thePatElectrons;
         iEvent.getByToken( electronToken1_, thePatElectrons );
@@ -779,7 +794,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     
     //zhud: all Reco without preselection
     std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
-
+    std::vector<const pat::Muon* > sDisplacedStandAloneMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
 
 
 
