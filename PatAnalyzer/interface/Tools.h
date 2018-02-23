@@ -116,6 +116,8 @@ namespace tools {
                                                                double v_muon_d0,
                                                                const bool usedz);
 
+    std::vector<const reco::Track* > SelectAllTrackMuons(const std::vector<reco::Track>  & thePatMuons);
+
     std::vector<const pat::Muon* > ssbMediumMuonSelector(const std::vector<pat::Muon>  & thePatMuons,
                                                                 double v_muon_pt,
                                                                 reco::Vertex::Point PV,

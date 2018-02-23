@@ -67,6 +67,7 @@ HNL::HNL(const edm::ParameterSet & iConfig) :
     pfcToken_                         (consumes<pat::PackedCandidateCollection>                    (iConfig.getParameter<edm::InputTag>("pfcLabel"))),
     jetToken_                         (consumes<pat::JetCollection>                    (iConfig.getParameter<edm::InputTag>("JetLabel"))),
     muonToken_                        (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("MuonLabel"))),
+    displacedStandAloneMuonsToken_    (consumes<std::vector<reco::Track>>                 (iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel"))),
     tauToken_                        (consumes<pat::TauCollection>                   (iConfig.getParameter<edm::InputTag>("TauLabel"))),
     electronToken1_                    (consumes<pat::ElectronCollection>             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
     electronToken_                    (consumes<edm::View<pat::Electron> >             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
@@ -76,16 +77,17 @@ HNL::HNL(const edm::ParameterSet & iConfig) :
     filterToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("filterResultsLabel")))
 
     {
-        Sample              = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
-        IT_muon             = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
-        IT_electron         = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
-        IT_tau              = iConfig.getParameter<edm::InputTag>("TauLabel") ;
-        IT_htt              = iConfig.getParameter<edm::InputTag>("L1httLabel");
-        IT_jet              = iConfig.getParameter<edm::InputTag>("JetLabel");
-        IT_pfmet            = iConfig.getParameter<edm::InputTag>("METLabel")  ;
-        IT_beamspot         = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
-        IT_hltresults       = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
-        IT_genParts         = iConfig.getParameter<edm::InputTag>("genPartsLabel");
+        Sample                         = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
+        IT_muon                        = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
+        IT_displacedStandAloneMuons    = iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel") ;
+        IT_electron                    = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
+        IT_tau                         = iConfig.getParameter<edm::InputTag>("TauLabel") ;
+        IT_htt                         = iConfig.getParameter<edm::InputTag>("L1httLabel");
+        IT_jet                         = iConfig.getParameter<edm::InputTag>("JetLabel");
+        IT_pfmet                       = iConfig.getParameter<edm::InputTag>("METLabel")  ;
+        IT_beamspot                    = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
+        IT_hltresults                  = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
+        IT_genParts                    = iConfig.getParameter<edm::InputTag>("genPartsLabel");
     }
 
 
@@ -259,6 +261,13 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
                 //==================================
 
+
+                //============ Pat displacedStandAloneMuons ============
+                edm::Handle< std::vector<reco::Track> > theDisplacedStandAloneMuons;
+                iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
+                if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
+                //======================================================
+
                 int GenParticlecounter = 0;            
                 
 
@@ -288,6 +297,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 }
                 
                 std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
+                std::vector<const reco::Track* > sDSAMu = SelectAllTrackMuons( *theDisplacedStandAloneMuons);
+
                 for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
                     
                     //cout << "------------------------------------------------------------------"<< endl;
@@ -701,6 +712,12 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
         if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
     //==================================
     
+    //============ Pat displacedStandAloneMuons ============
+    edm::Handle< std::vector<reco::Track> > theDisplacedStandAloneMuons;
+    iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
+    if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
+    //======================================================
+
     //============ Pat Electrons ============
         edm::Handle< std::vector<pat::Electron> > thePatElectrons;
         iEvent.getByToken( electronToken1_, thePatElectrons );
@@ -777,7 +794,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     
     //zhud: all Reco without preselection
     std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
-
+    //std::vector<const pat::Muon* > sDSAMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
+    std::vector<const reco::Track* > sDSAMu = SelectAllTrackMuons(*theDisplacedStandAloneMuons);
 
 
 
@@ -797,8 +815,23 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
 
 
     int leptonCounter = 0;
-    //int i=0;
+    _nDSAMu = 0;
     
+    //***********************************************************
+    //***zhud: Analyzing Displaced Stand Alone Muons*************
+    //***********************************************************
+    cout << "---zhud: Doing DSA Muons"<<endl; 
+    for(unsigned int i=0; i<sDSAMu.size(); i++){
+        const reco::Track *iM = sDSAMu[i];
+        cout<<"---zhud: DSA 1: pt = " << iM->pt() <<endl;
+        _nDSAMu++;
+    }
+
+
+    //***********************************************************
+    //***zhud: Finished Analyzing Displaced Stand Alone Muons****
+    //***********************************************************
+
     
 
     //**************************************************
@@ -838,7 +871,6 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
         
         _mvaValue[leptonCounter] = -1;
         _muonSegmentComp[leptonCounter] = iM->segmentCompatibility();
-        
         
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#Loose_Muon
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#MediumID2016_to_be_used_with_Run
@@ -1868,9 +1900,10 @@ void HNL::bookTree() {
     outputTree->Branch("_isfromHNLMu", &_isfromHNLMu, "_isfromHNLMu[_nGenLep]/O");
     outputTree->Branch("_ispromptMu", &_ispromptMu, "_ispromptMu[_nGenLep]/O");
 
-
     //zhud: end efficiency measurement KPIs
 
+
+    outputTree->Branch("_nDSAMu", &_nDSAMu, "_nDSAMu/I");
 
     outputTree->Branch("_nEle", &_nEle, "_nEle/I");
     outputTree->Branch("_nMu", &_nMu, "_nMu/I");

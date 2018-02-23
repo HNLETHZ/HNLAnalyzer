@@ -239,6 +239,20 @@ std::vector<const pat::Muon* > tools::SelectAllPatMuons(const std::vector<pat::M
     return vMuons;
 }
 
+//zhud: Get all Reco Muons without filter (for reco::Track muons)
+std::vector<const reco::Track* > tools::SelectAllTrackMuons(const std::vector<reco::Track>  & thePatMuons){
+    
+
+    
+    std::vector<const reco::Track* > vMuons;
+    for( std::vector<reco::Track>::const_iterator mu = thePatMuons.begin() ; mu != thePatMuons.end() ; mu++ )
+    {
+        vMuons.push_back(&*mu);
+    }
+    return vMuons;
+}
+
+
 std::vector<const pat::Muon* > tools::ssbMediumMuonSelector(const std::vector<pat::Muon>  & thePatMuons,
                                                       double v_muon_pt,
                                                       reco::Vertex::Point PV,
