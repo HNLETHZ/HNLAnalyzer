@@ -1,4 +1,4 @@
-#include "SUSYAnalyzer/PatAnalyzer/interface/Tools.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/Tools.h"
 
 double tools::getPFIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands,
                       const reco::Candidate* ptcl,
@@ -137,12 +137,13 @@ double tools::getPFIsolation(edm::Handle<pat::PackedCandidateCollection> pfcands
     return iso;
 }
 
+
+//zhud: Loose Muon Selector
 std::vector<const pat::Muon* > tools::ssbLooseMuonSelector(const std::vector<pat::Muon>  & thePatMuons,
                                                             double v_muon_pt,
                                                             reco::Vertex::Point PV,
                                                             double v_muon_d0,
-                                                           const bool usedz)
-{
+                                                           const bool usedz){
     double v_muon_eta = 2.4;
     double v_muon_dz = 0.1;
     if (!usedz) v_muon_dz = 9999999.;
@@ -201,6 +202,40 @@ std::vector<const pat::Muon* > tools::ssbLooseMuonSelector(const std::vector<pat
         vMuons.push_back(&*mu);
     }
     
+    return vMuons;
+}
+
+
+//zhud: Get all Reco Muons without filter
+std::vector<const pat::Muon* > tools::SelectAllPatMuons(const std::vector<pat::Muon>  & thePatMuons,
+                                                            double v_muon_pt,
+                                                            reco::Vertex::Point PV,
+                                                            double v_muon_d0,
+                                                           const bool usedz){
+    
+    double v_muon_eta = 2.5;
+    double v_muon_dz = 9999999.;
+    if (!usedz) v_muon_dz = 9999999.;
+    
+    std::vector<const pat::Muon* > vMuons;
+    for( std::vector<pat::Muon>::const_iterator mu = thePatMuons.begin() ; mu != thePatMuons.end() ; mu++ )
+    {
+
+         
+        if ( mu->pt()  < v_muon_pt ) continue;
+        if ( TMath::Abs( mu->eta() ) > v_muon_eta ) continue;
+        
+        if ( !(mu->isGlobalMuon() || mu->isTrackerMuon() )) continue;
+        if ( !(mu->isPFMuon()) ) continue;
+        
+        const reco::TrackRef innerTrack = mu->innerTrack();
+        if( innerTrack.isNull() ) continue;
+        
+        if(TMath::Abs(innerTrack->dxy(PV)) > v_muon_d0  ) continue;
+        if(TMath::Abs(innerTrack->dz(PV))   > v_muon_dz  ) continue;
+
+        vMuons.push_back(&*mu);
+    }
     return vMuons;
 }
 

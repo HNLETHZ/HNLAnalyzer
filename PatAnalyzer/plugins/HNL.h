@@ -50,10 +50,10 @@
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "FWCore/Framework/interface/LuminosityBlock.h"
 
-#include "SUSYAnalyzer/PatAnalyzer/interface/GenParticleManager.h"
-#include "SUSYAnalyzer/PatAnalyzer/interface/Statistics.h"
-#include "SUSYAnalyzer/PatAnalyzer/interface/Tools.h"
-#include "SUSYAnalyzer/PatAnalyzer/interface/OnTheFlyCorrections.hh"
+#include "HNLAnalyzer/PatAnalyzer/interface/GenParticleManager.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/Statistics.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/Tools.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/OnTheFlyCorrections.hh"
 
 
 //#include "EgammaAnalysis/ElectronTools/interface/EGammaMvaEleEstimatorCSA14.h"
@@ -96,7 +96,7 @@
 
 using namespace std;
 
-const int nLeptonsMax = 30; //zhud: originally nLeptonsMax=10;
+const int nLeptonsMax = 10; //zhud: originally nLeptonsMax=10;
 const int nJetsMax = 30;
 
 const char* _triggersTauNames8[6] =
@@ -521,13 +521,22 @@ private:
     
     //zhud: Begin efficiency KPIs
     int _nGenHNLMu, _nlHNLMu;
-    double _GenHNLMuPt[nLeptonsMax], _lHNLMuPtmc[nLeptonsMax];
+    double _GenHNLMuPt[nLeptonsMax], _GenHNLMuEta[nLeptonsMax], _GenHNLMuPhi[nLeptonsMax], _GenHNLMuE[nLeptonsMax];
+    double _lHNLMuPtmc[nLeptonsMax];
 
     double _lPt[nLeptonsMax], _lEta[nLeptonsMax], _lPhi[nLeptonsMax], _lE[nLeptonsMax];
     double _lPtmc[nLeptonsMax], _lEtamc[nLeptonsMax], _lPhimc[nLeptonsMax], _lEmc[nLeptonsMax];
     double _nuPtmc[nLeptonsMax], _nuEtamc[nLeptonsMax], _nuPhimc[nLeptonsMax], _nuEmc[nLeptonsMax];
     double _lMuPt[nLeptonsMax], _lMuEta[nLeptonsMax], _lMuPhi[nLeptonsMax], _lMuE[nLeptonsMax];
     double _GenMuPt[nLeptonsMax], _GenMuEta[nLeptonsMax], _GenMuPhi[nLeptonsMax], _GenMuE[nLeptonsMax];
+    double _GenHNLP, _GenHNLEta, _GenHNLPhi, _GenHNLE, _GenHNLMass, _GenHNLGamma, _GenHNLBeta, _GenHNLBetaGamma;
+
+    double _foundGenMuPt[nLeptonsMax];
+    bool _isdetectedMu[nLeptonsMax], _isfromHNLMu[nLeptonsMax], _ispromptMu[nLeptonsMax];
+
+    double _GenMuVx[nLeptonsMax], _GenMuVy[nLeptonsMax], _GenMuVxy[nLeptonsMax], _GenMuVz[nLeptonsMax], _GenMuVxyz[nLeptonsMax];
+    double _GenHNLVxProd, _GenHNLVyProd, _GenHNLVxyProd, _GenHNLVzProd, _GenHNLVxyzProd;
+    double _GenHNLVxDecay[nLeptonsMax], _GenHNLVyDecay[nLeptonsMax], _GenHNLVxyDecay[nLeptonsMax], _GenHNLVzDecay[nLeptonsMax], _GenHNLVxyzDecay[nLeptonsMax], _GenHNLMu3DDisplacement[nLeptonsMax];
     //zhud: End efficiency KPIs
     
     int _pdgmc[nLeptonsMax];

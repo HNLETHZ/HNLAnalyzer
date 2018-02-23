@@ -9,7 +9,7 @@
 #include "TFile.h"
 #include "TAxis.h"
 #include <iostream>
-#include "SUSYAnalyzer/PatAnalyzer/interface/mcbtagSFuncert.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/mcbtagSFuncert.h"
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------

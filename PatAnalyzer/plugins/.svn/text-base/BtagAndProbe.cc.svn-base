@@ -1,0 +1,251 @@
+#include "BtagAndProbe.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/View.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+using namespace std;
+using namespace edm;
+using namespace reco;
+using namespace tools;
+
+BtagAndProbe::BtagAndProbe(const edm::ParameterSet & iConfig)
+{
+  IT_muon         = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
+  IT_electron     = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
+  IT_jet          = iConfig.getParameter<edm::InputTag>("JetLabel");
+  IT_pfmet        = iConfig.getParameter<edm::InputTag>("METLabel")  ;
+  IT_beamspot     = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
+  IT_hltresults   = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
+  //vMuMu_HLTs   = iConfig.exists("MuMuHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("MuMuHLTPaths") : std::vector< std::string >(0);
+  //vElEl_HLTs   = iConfig.exists("ElElHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("ElElHLTPaths") : std::vector< std::string >(0);
+  //vElMu_HLTs   = iConfig.exists("ElMuHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("ElMuHLTPaths") : std::vector< std::string >(0);
+
+  value_pfmet      = iConfig.getUntrackedParameter<double>("value_pfmet");
+
+  value_muon_pt    = iConfig.getUntrackedParameter<double>("value_muon_pt");
+  value_muon_eta   = iConfig.getUntrackedParameter<double>("value_muon_eta");
+  value_muon_chi2Norm = iConfig.getUntrackedParameter<double>("value_muon_chi2Norm");
+  value_muon_d0    = iConfig.getUntrackedParameter<double>("value_muon_d0");
+  value_muon_nValidHits = iConfig.getUntrackedParameter<int>("value_muon_nValidHits");
+  value_muon_reliso= iConfig.getUntrackedParameter<double>("value_muon_reliso");
+  value_muon_hadVetoEt = iConfig.getUntrackedParameter<double>("value_muon_hadVetoEt");
+  value_muon_emVetoEt = iConfig.getUntrackedParameter<double>("value_muon_emVetoEt");
+
+  value_electron_pt = iConfig.getUntrackedParameter<double>("value_electron_pt");
+  value_electron_eta= iConfig.getUntrackedParameter<double>("value_electron_eta");
+  bool_electron_crackRemoval = iConfig.getUntrackedParameter<bool>("bool_electron_crackRemoval");
+  value_electron_d0 = iConfig.getUntrackedParameter<double>("value_electron_d0");
+  bool_electron_chargeConsistency = iConfig.getUntrackedParameter<bool>("bool_electron_chargeConsistency");
+  value_electron_reliso = iConfig.getUntrackedParameter<double>("value_electron_reliso");
+  value_electron_id = iConfig.getUntrackedParameter<std::string>("value_electron_id");
+  bool_electron_ecalDriven = iConfig.getUntrackedParameter<bool>("bool_electron_ecalDriven");
+  bool_electron_trackerDriven = iConfig.getUntrackedParameter<bool>("bool_electron_trackerDriven");
+
+  value_jet_multiplicity = iConfig.getUntrackedParameter<int> ("value_jet_multiplicity");
+  value_jet_et = iConfig.getUntrackedParameter<double>("value_jet_et");
+  value_jet_eta = iConfig.getUntrackedParameter<double>("value_jet_eta");
+  bool_jet_id = iConfig.getUntrackedParameter<bool>("bool_jet_id");
+  value_jet_leptonVetoDR = iConfig.getUntrackedParameter<double>("value_jet_leptonVetoDR");
+  value_ht = iConfig.getUntrackedParameter<double>("value_ht");
+  
+  value_dilepton_deltaVz = iConfig.getUntrackedParameter<double>("value_dilepton_deltaVz");
+  value_dilepton_hfMass= iConfig.getUntrackedParameter<double>("value_dilepton_hfMass");
+  bool_dilepton_vetoZ = iConfig.getUntrackedParameter<bool>("bool_dilepton_vetoZ");
+}
+
+
+void BtagAndProbe::beginJob()
+{
+
+// TFileDirectory subDir = fs->mkdir( "mySubDirectory" );
+// TFileDirectory subSubDir = subDir.mkdir( "mySubSubDirectory" ); 
+// h_pt = subDir.make<TH1F>( "pt"  , "p_{t}", 100,  0., 100. );
+
+   //book histograms
+ MET_DoubleMu_Den = fs->make<TH1F>("MET_DoubleMu_Den", "PFMET", 100, 0., 200.);
+ MET_DoubleMu_Num = fs->make<TH1F>("MET_DoubleMu_Num", "PFMET", 100, 0., 200.);
+ MET_DoubleEl_Den = fs->make<TH1F>("MET_DoubleEl_Den", "PFMET", 100, 0., 200.);
+ MET_DoubleEl_Num = fs->make<TH1F>("MET_DoubleEl_Num", "PFMET", 100, 0., 200.);
+ MET_DoubleEM_Den = fs->make<TH1F>("MET_DoubleEM_Den", "PFMET", 100, 0., 200.);
+ MET_DoubleEM_Num = fs->make<TH1F>("MET_DoubleEM_Num", "PFMET", 100, 0., 200.);
+
+ HT_DoubleMu_Den = fs->make<TH1F>("HT_DoubleMu_Den", "PFMET", 100, 50., 550.);
+ HT_DoubleMu_Num = fs->make<TH1F>("HT_DoubleMu_Num", "PFMET", 100, 50., 550.);
+ HT_DoubleEl_Den = fs->make<TH1F>("HT_DoubleEl_Den", "PFMET", 100, 50., 550.);
+ HT_DoubleEl_Num = fs->make<TH1F>("HT_DoubleEl_Num", "PFMET", 100, 50., 550.);
+ HT_DoubleEM_Den = fs->make<TH1F>("HT_DoubleEM_Den", "PFMET", 100, 50., 550.);
+ HT_DoubleEM_Num = fs->make<TH1F>("HT_DoubleEM_Num", "PFMET", 100, 50., 550.);
+
+  hHT  = fs->make<TH1F>("HT", "H_{T}" , 100, 0., 500.);
+  hMET = fs->make<TH1F>("MET", "PFMET", 100, 0., 200.);
+
+  hNJets = fs->make<TH1F>("NJets", "Jet Multiplicity", 10, -0.5, 10.);
+  hMuonPt = fs->make<TH1F>("MuonPt", "Muon p_{T}", 200, 0., 200.);
+
+}
+void BtagAndProbe::endJob()
+{
+}
+
+void BtagAndProbe::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup) 
+{
+
+  int run = iEvent.id().run();
+  ULong64_t event = iEvent.id().event();
+  int lumi = iEvent.luminosityBlock();
+
+
+//if(run < 190782 || run >191202 ) return;
+
+ bool HiggsDouble_Mu = false;
+ bool HiggsDouble_El = false;
+ bool Higgs_MuEG = false;
+
+ bool Double_Mu_HT = false;
+ bool Double_El_HT = false;
+ bool Double_MuEG_HT = false;
+
+ bool Double_Mu_MET = false;
+ bool Double_El_MET = false;
+ bool Double_MuEG_MET = false;
+ 
+   edm::Handle<TriggerResults> trigResults;
+   iEvent.getByLabel(IT_hltresults, trigResults);
+ 
+   if( trigResults.failedToGet() ) {
+         cout << "--- NO TRIGGER RESULTS !! ---" << endl; 
+   }
+ 
+   if( !trigResults.failedToGet() ) {
+ 
+     int N_Triggers = trigResults->size();
+ 
+     const edm::TriggerNames & trigName = iEvent.triggerNames(*trigResults);
+ 
+     for( int i_Trig = 0; i_Trig < N_Triggers; ++i_Trig ) {
+ 
+        if (trigResults.product()->accept(i_Trig)) {  
+	   //cout<<i_Trig << " ---Triggers---->> "<<trigName.triggerName(i_Trig)<< endl; 
+           TString TrigPath =trigName.triggerName(i_Trig);  
+//           TrigPath.ToLower();
+
+	   if( TrigPath.Contains("HLT_Mu17_Mu8_")) 					       HiggsDouble_Mu = true;
+	   if( TrigPath.Contains("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT")) HiggsDouble_El = true;
+	   if( TrigPath.Contains("HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL") ||
+	       TrigPath.Contains("HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL") )          Higgs_MuEG = true;
+
+	   if(TrigPath.Contains("HLT_DoubleMu8_Mass8_PFHT175"))                  Double_Mu_HT = true;
+	   if(TrigPath.Contains("HLT_DoubleEle8_CaloIdT_TrkIdVL_Mass8_PFHT175")) Double_El_HT = true;
+	   if(TrigPath.Contains("HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Mass8_PFHT175"))   Double_MuEG_HT = true;
+
+	   if(TrigPath.Contains("HLT_DoubleMu14_Mass8_PFMET40"))                 Double_Mu_MET = true;
+	   if(TrigPath.Contains("HLT_DoubleEle14"))Double_El_MET = true;
+	   if(TrigPath.Contains("HLT_Mu14_Ele14")) Double_MuEG_MET = true;
+
+        }
+     }
+   }
+
+//Beamspot
+  edm::Handle< reco::BeamSpot > TheBeamSpot;
+  iEvent.getByLabel( IT_beamspot, TheBeamSpot );
+  reco::BeamSpot bs;
+  if( ! TheBeamSpot.isValid() ) ERR( IT_beamspot ) ;
+
+
+//Pat MET
+  edm::Handle< vector<pat::MET> > ThePFMET;
+  iEvent.getByLabel(IT_pfmet, ThePFMET);
+  const pat::MET *pfmet; 
+  if( ! ThePFMET.isValid() ) ERR( IT_pfmet );
+
+
+//Pat Muons
+  edm::Handle< std::vector<pat::Muon> > thePatMuons;
+  iEvent.getByLabel( IT_muon, thePatMuons );
+  std::vector< const pat::Muon* > vMuons;
+  if( ! thePatMuons.isValid() )  ERR(IT_muon) ;
+
+//Pat Electrons
+  edm::Handle< std::vector<pat::Electron> > thePatElectrons;
+  iEvent.getByLabel( IT_electron, thePatElectrons );
+  std::vector< const pat::Electron* > vElectrons;
+  if( ! thePatElectrons.isValid() ) ERR( IT_electron );
+
+//Pat Jets
+  edm::Handle< std::vector< pat::Jet> > thePatJets;
+  iEvent.getByLabel(IT_jet , thePatJets );
+  std::vector< const pat::Jet* > vJets;
+  if( ! thePatJets.isValid() ) ERR(IT_jet);
+
+
+const vector<pat::MET> *pfmetcol = ThePFMET.product();
+pfmet = &(pfmetcol->front());
+//if( pfmet->pt() < value_pfmet );  // MET cut
+    
+std::vector<const pat::Muon* > SelectedMuons = MuonSelector( *thePatMuons, 
+value_muon_pt,	 
+value_muon_eta,   
+value_muon_chi2Norm, 
+value_muon_d0,	 
+value_muon_nValidHits,
+value_muon_reliso,
+value_muon_hadVetoEt, 
+value_muon_emVetoEt  );
+
+std::vector<const pat::Electron* > SelectedElectrons = ElectronSelector( *thePatElectrons, 
+value_electron_pt, 
+value_electron_eta, 
+value_electron_d0, 
+value_electron_reliso, 
+value_electron_id, 
+bool_electron_chargeConsistency,
+bool_electron_ecalDriven, 
+bool_electron_trackerDriven);
+
+
+bool jetLeptonCleaning = true;
+std::vector<const pat::Jet* > SelectedJets = JetSelector(*thePatJets, 
+value_jet_et,  
+value_jet_eta, 
+bool_jet_id, 
+jetLeptonCleaning, 
+value_jet_leptonVetoDR,
+SelectedElectrons,
+SelectedMuons);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////             
+//						B-Tag-And-Probe
+////////////////////////////////////////////////////////////////////////////////////////////////////////////              
+
+  for(unsigned int i = 0 ; i < SelectedMuons.size() ;i++ ){ const pat::Muon *mu_i = SelectedMuons[i]; 
+      
+      cout <<" selector    === >>> " <<SelectedMuons.size() << ", "<< mu_i->pt() << ", "<< mu_i->eta() << endl; 
+
+    }
+
+
+  for(unsigned int i = 0 ; i < SelectedElectrons.size() ;i++ ) {const pat::Electron *el_i = SelectedElectrons[i]; 
+      
+      cout <<" selector    === >>> " <<SelectedElectrons.size() << ", "<< el_i->pt() << ", "<< el_i->eta() << endl; 
+
+    }
+
+
+
+  for(unsigned int i = 0 ; i < SelectedJets.size() ;i++ ) {const pat::Jet *jet_i = SelectedJets[i]; 
+      
+      cout <<" selector    === >>> " <<SelectedJets.size() << ", "<< jet_i->pt() << ", "<< jet_i->eta() << endl; 
+
+        double HT = 0.;
+	  HT+= jet_i->et();
+    }
+
+
+
+
+
+
+  
+}
+
+DEFINE_FWK_MODULE(BtagAndProbe);

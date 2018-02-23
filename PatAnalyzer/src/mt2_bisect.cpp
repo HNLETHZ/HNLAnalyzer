@@ -32,7 +32,7 @@
               
 #include <iostream>
 #include <math.h>
-#include "SUSYAnalyzer/PatAnalyzer/interface/mt2_bisect.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/mt2_bisect.h"
 
 using namespace std;
 

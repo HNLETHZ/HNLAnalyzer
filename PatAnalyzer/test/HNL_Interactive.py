@@ -10,7 +10,7 @@ isSMS    = bool(False)
 useCrab  = bool(False)
 doSusyTopProjection = bool(False)
 inputFile=""
-outputFile="results/test.root"
+outputFile="/afs/cern.ch/work/d/dezhu/CMSSW_8_0_30/src/0_Results/test.root"
 def getVal(arg):
     i=0
     while i < len(arg) and arg[i] != "=": i+=1
@@ -78,10 +78,11 @@ process.source = cms.Source ("PoolSource",
 
 #from  Data.ElectronHad_Run2012B_SSDiLepSkim_193752_194076 import *
 
+# Input MiniAOD destination
 if isMC:
-    process.source.fileNames = cms.untracked.vstring( 
-        'root://cms-xrd-global.cern.ch//store/mc/RunIISummer16MiniAODv2/WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/80000/0018B491-F0C3-E611-B568-D8D385AF882A.root',              
-#              'file:../../../../../HNL_MC/10A42D2B-2274-E711-AA76-047D7B2E84EC.root'
+    process.source.fileNames = cms.untracked.vstring(               
+	      'file:/afs/cern.ch/user/d/dezhu/workspace/public/10A42D2B-2274-E711-AA76-047D7B2E84EC.root' #10/0.0001, ctau = 176.5 mm
+       #'file:/afs/cern.ch/user/d/dezhu/workspace/public/20989B66-CA73-E711-ABD7-7845C4FC3C86.root' #5/0.001, ctau = 56.8 mm
 #             'file:/cms/data/store/mc/RunIISpring16MiniAODv2/ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/70000/8E8FD1DC-C526-E611-A48A-002590E7DFFC.root'
     )
 
@@ -104,47 +105,48 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(outputF
 #    process.source.fileNames.append(i)
 
 #FakeLeptons
-process.FakeLeptons = cms.EDAnalyzer(
-    "HNL",
-    MuonLabel           = cms.InputTag("slimmedMuons"),
-    ElectronLabel       = cms.InputTag("slimmedElectrons"),
-    TauLabel            = cms.InputTag("slimmedTaus"),
-    convLabel           = cms.InputTag("reducedEgamma:reducedConversions"),
-    #TauDiscriminatorLabel = cms.InputTag("recoPFTauDiscriminator"),
-    L1httLabel          = cms.InputTag("l1extraParticles:MHT:RECO"),
-    JetLabel            = cms.InputTag("slimmedJets"),
-    BeamSpotLabel       = cms.InputTag("offlineBeamSpot"),
-    vtxLabel            = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    rhoLabel            = cms.InputTag("fixedGridRhoFastjetAll"),
-    rhoLabelCN          = cms.InputTag("fixedGridRhoFastjetCentralNeutral"),
-    PUInfoLabel         = cms.InputTag("slimmedAddPileupInfo"),
-    generatorLabel      = cms.InputTag("generator"),
-    lheevent            = cms.InputTag("externalLHEProducer"),
-    pfcLabel            = cms.InputTag("packedPFCandidates"),
-    HLTResultsLabel     = cms.InputTag("TriggerResults::HLT"),
-    filterResultsLabel  = cms.InputTag("TriggerResults::RECO"),
-    #prescales = cms.InputTag("patTrigger"),
-    prescales           = cms.InputTag("patTrigger"),
-    METLabel            = cms.InputTag("slimmedMETs"),
-    genPartsLabel       = cms.InputTag("prunedGenParticles"),
-    #METFilter = cms.InputTag("TriggerResults::PAT"),
-    qualityCuts         = PFTauQualityCuts,
-    SampleLabel         = cms.untracked.string("ElectronsMC"), # defines a piece of code to run; helps to avoid code recompilation
-    mvaValuesMap        = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16GeneralPurposeV1Values"),
-    mvaCategoriesMap    = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16GeneralPurposeV1Categories"),
-    mvaValuesMapHZZ     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Values"),
-    mvaCategoriesMapHZZ = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Categories"),
-    #mvaValuesMap     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
-    #mvaCategoriesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Categories"),
-    BadChCandFilter     = cms.InputTag("BadChargedCandidateFilter"),
-    BadPFMuon           = cms.InputTag("BadPFMuonFilter")
-)
+process.FakeLeptons = cms.EDAnalyzer("HNL",
+                                       MuonLabel = cms.InputTag("slimmedMuons"),
+                                       displacedGlobalMuonsLabel = cms.InputTag("displacedGlobalMuons"),
+                                       displacedStandAloneMuonsLabel = cms.InputTag("displacedStandAloneMuons"),
+                                       ElectronLabel = cms.InputTag("slimmedElectrons"),
+                                       TauLabel = cms.InputTag("slimmedTaus"),
+					                             convLabel = cms.InputTag("reducedEgamma:reducedConversions"),
+                                       #TauDiscriminatorLabel = cms.InputTag("recoPFTauDiscriminator"),
+                                       L1httLabel = cms.InputTag("l1extraParticles:MHT:RECO"),
+                                       JetLabel = cms.InputTag("slimmedJets"),
+                                       BeamSpotLabel = cms.InputTag("offlineBeamSpot"),
+                                       vtxLabel = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                                       rhoLabel = cms.InputTag("fixedGridRhoFastjetAll"),
+				                               rhoLabelCN = cms.InputTag("fixedGridRhoFastjetCentralNeutral"),
+                                       PUInfoLabel = cms.InputTag("slimmedAddPileupInfo"),
+					                             generatorLabel = cms.InputTag("generator"),
+					                             lheevent = cms.InputTag("externalLHEProducer"),
+					                             pfcLabel = cms.InputTag("packedPFCandidates"),
+                                       HLTResultsLabel = cms.InputTag("TriggerResults::HLT"),
+                                       filterResultsLabel = cms.InputTag("TriggerResults::RECO"),
+                                       #prescales = cms.InputTag("patTrigger"),
+                                       prescales = cms.InputTag("patTrigger"),
+                                       METLabel = cms.InputTag("slimmedMETs"),
+				                               genPartsLabel = cms.InputTag("prunedGenParticles"),
+                                       #METFilter = cms.InputTag("TriggerResults::PAT"),
+                                       qualityCuts = PFTauQualityCuts,
+                                       SampleLabel = cms.untracked.string("ElectronsMC"), # defines a piece of code to run; helps to avoid code recompilation
+                                       mvaValuesMap     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16GeneralPurposeV1Values"),
+                                       mvaCategoriesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16GeneralPurposeV1Categories"),
+                              				 mvaValuesMapHZZ = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Values"),
+                              				 mvaCategoriesMapHZZ = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring16HZZV1Categories"),
+                                       #mvaValuesMap     = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Values"),
+                                       #mvaCategoriesMap = cms.InputTag("electronMVAValueMapProducer:ElectronMVAEstimatorRun2Spring15NonTrig25nsV1Categories"),
+					                             BadChCandFilter = cms.InputTag("BadChargedCandidateFilter"),
+					                             BadPFMuon = cms.InputTag("BadPFMuonFilter")
+                                       )
 
 process.goodOfflinePrimaryVertices = cms.EDFilter( "PrimaryVertexObjectFilter" # checks for fake PVs automatically
                                                   , filterParams =cms.PSet(
                                                                            minNdof = cms.double( 4. )
                                                                            , maxZ    = cms.double( 24. )
-                                                                           , maxRho  = cms.double( 2. ) )                
+                                                                           , maxRho  = cms.double( 2. ) )		
                                                   , filter       = cms.bool( False ) # use only as producer
                                                   , src          = cms.InputTag( 'offlineSlimmedPrimaryVertices' )
 )
@@ -180,7 +182,7 @@ process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
 
 if isMC:
     process.p = cms.Path(
-        process.goodOfflinePrimaryVertices
+	process.goodOfflinePrimaryVertices
        *process.BadChargedCandidateFilter
        *process.BadPFMuonFilter
 #    *process.electronMVAValueMapProducer
@@ -191,7 +193,7 @@ else:
    import FWCore.PythonUtilities.LumiList as LumiList
    process.source.lumisToProcess = LumiList.LumiList(filename = '/cms/data/store/user/t2/users/lesya/CMSSW_8_0_20_patch1/src/SUSYAnalyzer/PatAnalyzer/test/JSON/Cert_271036-282037_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt').getVLuminosityBlockRange()
    process.p = cms.Path(
-        process.goodOfflinePrimaryVertices
+	process.goodOfflinePrimaryVertices
 #       *process.eeBadScFilter
        *process.HBHENoiseFilterResultProducer
        *process.ApplyBaselineHBHENoiseFilter

@@ -1,4 +1,4 @@
-#include "SUSYAnalyzer/PatAnalyzer/interface/Statistics.h"
+#include "HNLAnalyzer/PatAnalyzer/interface/Statistics.h"
 #include "TMath.h"
 using namespace std;
 

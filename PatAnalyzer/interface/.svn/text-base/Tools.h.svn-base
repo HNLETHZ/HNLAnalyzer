@@ -1,0 +1,142 @@
+#ifndef Tools_H
+#define Tools_H
+
+#include "FWCore/Framework/interface/EDFilter.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EgammaCandidates/interface/Conversion.h"
+#include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
+#include "DataFormats/EgammaCandidates/interface/Photon.h"
+#include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/METReco/interface/PFMET.h"
+#include "DataFormats/METReco/interface/PFMETCollection.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
+#include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h" 
+#include "DataFormats/RecoCandidate/interface/IsoDeposit.h" 
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+
+//Root Classes
+
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TH1I.h"
+#include "TFile.h"
+#include "TDirectory.h"
+#include "TTree.h"
+#include "TStyle.h"
+#include "TCanvas.h"
+#include "TString.h"
+#include "TMath.h"
+#include "TLorentzVector.h"
+#include "TLegend.h"
+
+//Standard C++ classes
+#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+#include <utility>
+#include <ostream>
+#include <fstream>
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <iomanip>
+
+using namespace std;
+
+namespace tools {
+
+  struct event_info
+  {
+    std::vector<int> el,mu;
+ 
+    float met;
+    float ht;
+    int channel;
+    float weight;
+    ULong64_t event;
+    int  lumi;
+    uint run;
+    TString comment;
+    event_info():  met(-1.), ht(-1.), channel(0), weight(1.), event(0), lumi(0), 
+		   run(0), comment("") {}
+    
+  } ;
+
+ 
+  float mass(float pt1 , float pt2, float eta1 , float eta2, float phi1, float phi2);
+  
+   void ERR( edm::InputTag& IT );
+
+
+   struct lepton_pair 
+   {
+     int i; //first lepton index                                                                                      
+     int j; //second lepton index                                                                                     
+     float sumPt;
+     int channel ;  //mumu =1 , emu =2, ee =3                                                                         
+    };
+
+/////////////////////////  Selectors //////////////////
+std::vector<const pat::Muon* > MuonSelector(const std::vector<pat::Muon> & thePatMuons, 
+double v_muon_pt,	 
+double v_muon_eta,  
+double v_muon_chi2Norm,
+double v_muon_d0,	 
+int v_muon_nValidHits, 
+double v_muon_reliso,
+double v_muon_hadVetoEt,
+double v_muon_emVetoEt );
+
+
+std::vector<const pat::Electron* > ElectronSelector(const std::vector<pat::Electron>  & thePatElectrons, 
+double v_electron_pt, 
+double v_electron_eta, 
+double v_electron_d0, 
+double v_electron_reliso, 
+std::string v_electron_id, 
+bool bool_electron_chargeConsistenc,
+bool bool_electron_ecalDriven, 
+bool bool_electron_trackerDriven);
+
+
+std::vector<const pat::Jet* > JetSelector(const std::vector<pat::Jet>  & thePatJets, 
+double  value_jet_et,  
+double  value_jet_eta, 
+bool    bool_jet_id, 
+bool    jetLeptonCleaning, 
+double  value_jet_leptonVetoDR,
+std::vector<const pat::Electron*> vElectrons,
+std::vector<const pat::Muon*> vMuons);
+
+}  
+
+#endif

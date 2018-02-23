@@ -1,0 +1,204 @@
+ #include "SUSYAnalyzer/PatAnalyzer/interface/Tools.h"
+ 
+ 
+  float tools::mass(float pt1 , float pt2, float eta1 , float eta2, float phi1, float phi2)
+  {
+    TLorentzVector v1,v2;
+    v1.SetPtEtaPhiM(pt1, eta1, phi1, 0.);
+    v2.SetPtEtaPhiM(pt2,eta2, phi2, 0.);
+    v1 = v1 + v2;  
+    return v1.Mag();
+  }
+
+   void tools::ERR( edm::InputTag& IT )
+  {
+    cerr << "[ERROR] : " << IT << " is not a valid input label for this event.  SKIPPING EVENT " << endl;
+  }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  //Muon Selector 
+std::vector<const pat::Muon* > tools::MuonSelector(const std::vector<pat::Muon>  & thePatMuons, 
+double v_muon_pt,	 
+double v_muon_eta,  
+double v_muon_chi2Norm,
+double v_muon_d0,	 
+int v_muon_nValidHits, 
+double v_muon_reliso,
+double v_muon_hadVetoEt,
+double v_muon_emVetoEt 
+)
+{  
+  std::vector<const pat::Muon* > vMuons;
+      for( std::vector<pat::Muon>::const_iterator mu = thePatMuons.begin() ; mu != thePatMuons.end() ; mu++ ) 
+	{
+	  if ( mu->pt()  < v_muon_pt ) continue;
+	  if ( TMath::Abs( mu->eta() ) > v_muon_eta ) continue;
+	  if ( !mu->isTrackerMuon() ) continue; 
+	  if ( !mu->isGood( "GlobalMuonPromptTight") ) continue; 
+	  const reco::TrackRef innerTrack = mu->innerTrack();
+	  if( innerTrack.isNull() ) continue;
+	  //if( TMath::Abs( innerTrack->dxy( bs.position() ) ) > v_muon_d0 ) continue;  /// NEEDS TO BE MODIFIED to take PV as input
+	  if( innerTrack->numberOfValidHits() < v_muon_nValidHits ) continue;
+	  const reco::TrackRef globalTrack = mu->globalTrack() ;
+	  if( globalTrack.isNull() ) continue;
+	  if( globalTrack->normalizedChi2() > v_muon_chi2Norm ) continue;
+	  if( mu->isolationR03().emVetoEt > v_muon_emVetoEt ) continue;
+	  if( mu->isolationR03().hadVetoEt> v_muon_hadVetoEt ) continue;
+	  float RelIso = (mu->isolationR03().emEt + mu->isolationR03().hadEt + mu->isolationR03().sumPt) / mu->pt() ;
+	  if( RelIso > v_muon_reliso ) continue;
+	  vMuons.push_back(&*mu);
+       }
+       
+       return vMuons;      
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //Electron Selector 
+
+std::vector<const pat::Electron* > tools::ElectronSelector(const std::vector<pat::Electron>  & thePatElectrons, 
+double v_electron_pt, 
+double v_electron_eta, 
+double v_electron_d0, 
+double v_electron_reliso, 
+std::string v_electron_id, 
+bool bool_electron_chargeConsistency,
+bool bool_electron_ecalDriven, 
+bool bool_electron_trackerDriven)
+{
+  std::vector<const pat::Electron* > vElectrons;  
+        for( std::vector<pat::Electron>::const_iterator el = thePatElectrons.begin() ; el != thePatElectrons.end() ; el++ ) 
+	{
+	  if( el->pt() < v_electron_pt ) continue;
+	  if( TMath::Abs(el->eta()) > v_electron_eta ) continue;
+	  if( TMath::Abs(el->eta()) < 1.567 &&  TMath::Abs(el->eta()) > 1.470 ) continue;
+	 
+	  //const reco::GsfTrackRef gsfTrack = el->gsfTrack();
+	  //if( TMath::Abs( gsfTrack->dxy( bs.position() ) ) > value_electron_d0 ) continue; /// NEEDS TO BE MODIFIED to take PV as input
+	  
+	  float ecalIso = TMath::Abs(el->eta()) > 1.47 ? el->dr03TkSumPt() : TMath::Max(el->dr03TkSumPt()-1.,0.); 
+	  float RelIso = (el->dr03EcalRecHitSumEt() + el->dr03HcalTowerSumEt() + ecalIso ) / el->pt() ;
+	  if( RelIso  > v_electron_reliso ) continue;
+
+	  if( bool_electron_chargeConsistency && !el->isGsfCtfScPixChargeConsistent() )  continue;
+	  if( v_electron_id.size() )
+	    {
+	      int elId =  el->electronID(v_electron_id);
+	      if( elId < 4  ) continue;                      // just used for conversions, impose isolation, id, seperately...
+
+	      //customized selection from RA5
+	      if( el->pt() < 20. )
+		{
+		  if( ! ( el->fbrem() > 0.15 || ( TMath::Abs( el->superCluster()->eta() ) < 1.0 && el->eSuperClusterOverP() > 0.95 ) ) ) continue;
+		}
+	      if( TMath::Abs( el->eta() < 1.4442 ) )
+		{
+		  if( TMath::Abs(el->deltaPhiSuperClusterTrackAtVtx()) > 0.06 ) continue;
+		  if( TMath::Abs(el->deltaEtaSuperClusterTrackAtVtx()) > 0.004 ) continue;
+		  if( TMath::Abs(el->scSigmaIEtaIEta()) > 0.01 ) continue;
+		  if( TMath::Abs(el->hadronicOverEm()) > 0.04 ) continue;
+		}
+	      else if( TMath::Abs( el->eta() ) < 2.4 ) 
+		{
+		  if( TMath::Abs(el->deltaPhiSuperClusterTrackAtVtx()) > 0.03 ) continue;
+		  if( TMath::Abs(el->deltaEtaSuperClusterTrackAtVtx()) > 0.007 ) continue;
+		  if( TMath::Abs(el->scSigmaIEtaIEta()) > 0.03 ) continue;
+		  if( TMath::Abs(el->hadronicOverEm()) > 0.1 ) continue;
+	        }
+	    }
+	  if( bool_electron_ecalDriven && !el->ecalDrivenSeed() ) continue;
+	  if( bool_electron_trackerDriven && !el->trackerDrivenSeed() ) continue;
+	  
+	  vElectrons.push_back(&*el );
+	}
+      return vElectrons;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::vector<const pat::Jet* > tools::JetSelector(const std::vector<pat::Jet>  & thePatJets, 
+double  v_jet_et,  
+double  v_jet_eta, 
+bool    bool_jet_id, 
+bool    jetLeptonCleaning, 
+double  v_jet_leptonVetoDR,
+std::vector<const pat::Electron*> vElectrons,
+std::vector<const pat::Muon*> vMuons)
+{
+float RelIsoCut=0.15;
+std::vector< const pat::Jet* > vJets;
+
+      for( std::vector<pat::Jet>::const_iterator jet = thePatJets.begin(); jet != thePatJets.end(); jet++ ) 
+	{
+	  if( jet->et() < v_jet_et )continue;
+	  if( TMath::Abs( jet->eta() ) > v_jet_eta ) continue;
+	  if( bool_jet_id )
+	    {
+	      if( jet->neutralHadronEnergyFraction() >= 0.99 ) continue;
+	      if( jet->neutralEmEnergyFraction() >= 0.99 ) continue;
+	      if( ( jet->neutralHadronMultiplicity() + jet->chargedHadronMultiplicity() ) < 2 ) continue;
+	      if( TMath::Abs( jet->eta() ) < 2.4 ) 
+		{
+		  if( jet->chargedHadronEnergyFraction() == 0. ) continue;
+		  if( jet->chargedEmEnergyFraction() >= 0.99 ) continue;
+		  if( jet->chargedMultiplicity() == 0 ) continue;
+		}
+	    }
+
+	  bool vetoJet = false;
+          for(unsigned int i = 0 ; i < vMuons.size() ;i++ ) 
+            {
+             const pat::Muon *mu = vMuons[i]; 
+	      float dphi = TMath::ACos( TMath::Cos( mu->phi()-jet->phi() ));
+	      float deta = mu->eta()-jet->eta();
+	      float dr = TMath::Sqrt( dphi*dphi + deta*deta) ;
+      	      float RelIso = (mu->isolationR03().emEt + mu->isolationR03().hadEt + mu->isolationR03().sumPt) / mu->pt() ;
+	      if(jetLeptonCleaning && dr < v_jet_leptonVetoDR && RelIso < RelIsoCut)
+		{
+		  vetoJet = true;
+		  break;
+		}
+	    }
+	  if( vetoJet ) continue;
+
+          for(unsigned int i = 0 ; i < vElectrons.size() ;i++ ) 
+            {
+             const pat::Electron *el = vElectrons[i]; 
+	      float dphi = TMath::ACos( TMath::Cos( el->phi()-jet->phi() ) );
+	      float deta = el->eta() - jet->eta();
+	      float dr = TMath::Sqrt( dphi*dphi + deta*deta );
+	      
+	      float ecalIso = TMath::Abs(el->eta()) > 1.47 ? el->dr03TkSumPt() : TMath::Max(el->dr03TkSumPt()-1.,0.); 
+	      float RelIso = (el->dr03EcalRecHitSumEt() + el->dr03HcalTowerSumEt() + ecalIso ) / el->pt() ;
+	      if(jetLeptonCleaning && dr < v_jet_leptonVetoDR && RelIso < RelIsoCut) 
+		{
+		  vetoJet = true;
+		  break;
+		}
+	    }
+	  if( vetoJet ) continue;	  
+	  vJets.push_back( &*jet );
+      }
+	  return vJets;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

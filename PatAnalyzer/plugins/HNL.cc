@@ -203,8 +203,8 @@ void HNL::endJob() {
 
 void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     //if (iEvent.id().event()!=100) return;
-    cout << "--------------------------------------------------------------------------------------------------------------" << endl;
-    cout << "---zhud: doing HNL::analyze() with event: " << iEvent.id().event() << endl;;
+    // cout << "--------------------------------------------------------------------------------------------------------------" << endl;
+    // cout << "---zhud: doing HNL::analyze() with event: " << iEvent.id().event() << endl;;
     //bool islepton;
     if (Sample=="ElectronsMC") {
         _genHT = 0;
@@ -260,6 +260,34 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 //==================================
 
                 int GenParticlecounter = 0;            
+                
+
+
+                for(GenParticleCollection::const_reverse_iterator q = TheGenParticles->rbegin() ; q != TheGenParticles->rend() ; q++ ){
+                   if (q->pdgId() == 9900012){
+                        // cout << "Found 1 HNL! ";
+                        _nGenHNL++;
+                        
+                        _GenHNLP              = q->p();
+                        _GenHNLEta            = q->eta();
+                        _GenHNLPhi            = q->phi();
+                        _GenHNLE              = q->energy();
+                        _GenHNLMass           = q->mass();
+                        _GenHNLBetaGamma      = _GenHNLP / _GenHNLMass;
+                        _GenHNLGamma          = _GenHNLE  / _GenHNLMass;
+                        _GenHNLBeta           = _GenHNLBetaGamma / _GenHNLGamma;
+
+                        // cout << "Mass = "<< _GenHNLMass << "; Gamma = " << _GenHNLGamma << endl; 
+                                 
+                        _GenHNLVxProd         = q->vx();
+                        _GenHNLVyProd         = q->vy();
+                        _GenHNLVxyProd        = abs(sqrt(pow(q->vx(),2) + pow(q->vy(),2)));
+                        _GenHNLVzProd         = q->vz();
+                        _GenHNLVxyzProd       = abs(sqrt(pow(q->vx(),2) + pow(q->vy(),2) + pow(q->vz(),2)));
+                    } 
+                }
+                
+                std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
                 for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
                     
                     //cout << "------------------------------------------------------------------"<< endl;
@@ -268,6 +296,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                     // std::cout<<"gen particle pdg ID "<<id<<std::endl;
                     //if (id == 1000023) mChi20 = p->mass(); // SUSY stuff
                     //if (id == 1000022) mChi10 = p->mass(); // SUSY stuff
+
+
                     if ( (id == 12 || id == 14 || id == 16 ) && (p->status() == 1) ) { // 12 = nu_e; 14 = nu_mu; 16 = nu_tau
                         TLorentzVector Gen;
                         //cout << "---zhud: id = 12 | 14 | 16; doing Gen.SetPtEtaPhiE( p->pt(), p->eta(), p->phi(), p->energy() ): ";
@@ -275,31 +305,103 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                         Gen0 += Gen;
                     }
                     if ( (id == 11 || id == 13  ) && (p->status() == 1) ) { // 11 = e, 13 = mu
-                        //std::cout<<"---zhud: Recorded a Gen particle (id="<<id<<") with pt = "<<p->pt()<<"; ";
-            		    //std::cout<<"Print Inheritance tree: "; GPM.printInheritance(&*p); cout <<endl;
-                        //cout << "---zhud: do _nGenLep++ while p_status is "<<p->status()<<endl;
+                        
                         _nGenLep++;
                         if (p->status()!=1){_nGenStatusNot1++;}
                         if (id == 11 && p->status()==1){_nGenE++;}
                         if (id == 13 && p->status()==1){
-                            // _GenMuPt[_nGenMu] = p ->pt();
-                            // _nGenMu++;
-                            if (GPM.fromID(&*p,9900012) && p->pt()>1) {
-                                _GenHNLMuPt[_nGenHNLMu] = p->pt();
-                                _nGenHNLMu++;
-                                //cout<< "---zhud: This is a GenMu from HNL! Recorded into _GenHNLMuPt with pt = "<< p->pt()<<endl;
+                            
+                            _isdetectedMu[_nGenMu]=false;
+                            _isfromHNLMu[_nGenMu]=false;
+                            _ispromptMu[_nGenMu]=false;
+                            // cout << "---zhud: doing Gen Muon number " << GenParticlecounter << ": ";
+                            
+                            _GenMuPt[_nGenMu] = p->pt();
+                            _GenMuEta[_nGenMu] = p->eta();
+                            _GenMuPhi[_nGenMu] = p->phi();
+                            _GenMuE[_nGenMu] = p->energy();
+                            
+                            _GenMuVx[_nGenMu]   = p->vx();
+                            _GenMuVy[_nGenMu]   = p->vy();
+                            _GenMuVxy[_nGenMu]  = abs(sqrt(pow(p->vx(),2) + pow(p->vy(),2)));
+                            _GenMuVz[_nGenMu]   = p->vz();
+                            _GenMuVxyz[_nGenMu] = abs(sqrt(pow(p->vx(),2) + pow(p->vy(),2) + pow(p->vz(),2)));
+
+
+                            // cout << "pt = " << p->pt() << " eta = " << p->eta() << endl;
+                            
+                            // cout << "---zhud: vx = " << p->vx() << " vy = " << p->vy() << " vz = " << p->vz() << endl;
+
+
+                            
+                            TLorentzVector vGen, vReco;
+                            vGen.SetPtEtaPhiE(p->pt(),p->eta(),p->phi(),p->energy());
+                            double deltaR = 9999.;
+
+
+                            for(unsigned int i = 0 ; i < sMu.size() ;i++ ){
+                                const pat::Muon *iM = sMu[i];
+                                vReco.SetPtEtaPhiE(iM->pt(),iM->eta(),iM->phi(),iM->energy());
+                                double deltaRcur = vGen.DeltaR(vReco);
+                                if (deltaRcur <deltaR){
+                                    deltaR = deltaRcur;
+                                }    
                             }
-                        }
-                        if (GPM.fromID(&*p,9900012)){
-                            _nGenHNL++;
-                            //cout<< "---zhud: Found one GenLep from HNL. # of HNLs: "<< _nGenHNL << endl;
+                            
+                            if (deltaR < 0.2){
+                                _foundGenMuPt[_nGenMu] = p->pt();
+                                _isdetectedMu[_nGenMu] = true;
+                                //cout << "---zhud: Found a corresponding Reco Muon!!!" << endl;      
+                            }
+
+                            if (deltaR >= 0.2){
+                                _foundGenMuPt[_nGenMu] = -1;
+                                _isdetectedMu[_nGenMu] = false;
+                                //cout << "---zhud: NO corresponding Reco Muon founded..." << endl;
+                            }
+
+                            
+                            //GPM.printInheritance(&*p);
+
+                            if (GPM.fromID(&*p,9900012) && p->pt()>1) {
+                                
+                                _GenHNLMuPt[_nGenHNLMu] = p->pt();
+                                _GenHNLMuEta[_nGenHNLMu] = p->eta();
+                                _GenHNLMuPhi[_nGenHNLMu] = p->phi();
+                                _GenHNLMuE[_nGenHNLMu] = p->energy();
+
+                                _isfromHNLMu[_nGenMu] = true;
+                                
+                                // cout<< "---zhud: Found Muon<-HNL"<<endl;
+                                
+                                
+                                _GenHNLVxDecay[_nGenHNLMu]          = _GenMuVx[_nGenMu] - _GenHNLVxProd;
+                                _GenHNLVyDecay[_nGenHNLMu]          = _GenMuVy[_nGenMu] - _GenHNLVyProd;
+                                _GenHNLVxyDecay[_nGenHNLMu]         = sqrt(pow(_GenMuVx[_nGenMu],2) + pow(_GenMuVy[_nGenMu],2));
+                                _GenHNLVzDecay[_nGenHNLMu]          = _GenMuVz[_nGenMu] - _GenHNLVzProd;
+                                _GenHNLVxyzDecay[_nGenHNLMu]        = sqrt(pow(_GenMuVx[_nGenMu],2) + pow(_GenMuVy[_nGenMu],2) + pow(_GenMuVz[_nGenMu],2));
+                                _GenHNLMu3DDisplacement[_nGenHNLMu] = _GenHNLVxyzDecay[_nGenHNLMu] / _GenHNLBetaGamma;
+                                
+                                // cout << "---zhud: 3D Displacement: " << _GenHNLVxyzDecay[_nGenHNLMu] << " / " << _GenHNLBetaGamma << " = " << _GenHNLMu3DDisplacement[_nGenHNLMu] << endl;
+
+                                _nGenHNLMu++;    
+                            }
+
+                            if (GPM.fromID(&*p,9900012)==false && p->isPromptFinalState() == true){
+                                _ispromptMu[_nGenMu] = true;
+                                //cout << "---zhud: Found Muon<-PROMPT" <<endl;
+                            }
+                        
+                            _nGenMu++;
                         }
 
                     }
+                    
+
                     if ( ( id == 15 ) && (p->status() == 2) ) { //15 = tau
                         //cout<< "---zhud: id = 15; ";
     		            // std::cout<<"---pt = "<<p->pt()<<std::endl;
-                        GPM.printInheritance(&*p);
+                        //GPM.printInheritance(&*p);
                     }
                     //if ( (id == 6 || id == 24 || id == 23 || id == 25 ) && (p->isLastCopy()) && (p->status() == 62) ) {
                     if ( (id == 23) && (p->isLastCopy()) && (p->status() == 62) ) { // 23 = Z_0
@@ -328,54 +430,6 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                     }
                     
             
-                    //zhud: Efficiency Analysis
-                    if((id == 13) && (p->status() == 1)){
-                        
-                        cout << "---zhud: doing Gen Muon number " << GenParticlecounter << ": ";
-                        
-                        _GenMuPt[_nGenMu] = p->pt();
-                        _GenMuEta[_nGenMu] = p->eta();
-                        _GenMuPhi[_nGenMu] = p->phi();
-                        _GenMuE[_nGenMu] = p->energy();
-
-                        cout << "pt = " << p->pt() << endl;
-                        _nGenMu++;
-                        
-                        std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
-                        bool isdetected = false;
-                        TLorentzVector vGen, vReco;
-                        vGen.SetPtEtaPhiE(p->pt(),p->eta(),p->phi(),p->energy());
-                        double deltaR = 9999.;
-
-
-                        for(unsigned int i = 0 ; i < sMu.size() ;i++ ){
-                            const pat::Muon *iM = sMu[i];
-                            vReco.SetPtEtaPhiE(iM->pt(),iM->eta(),iM->phi(),iM->energy());
-                            double deltaRcur = vGen.DeltaR(vReco);
-                            if (deltaRcur <deltaR){
-                                deltaR = deltaRcur;
-                            }    
-                        }
-                        
-                        if (deltaR < 0.2){
-                            isdetected = true;
-                            _lMuPt[_nGenMu] = p->pt();
-                            _nMu++;
-                            cout << "---zhud: Found a corresponding Reco Muon!!!" << endl;
-                        }
-
-                        if (isdetected == false){
-                            cout << "---zhud: NO corresponding Reco Muon founded..." << endl;
-                        }
-
-
-                        // if (GPM.fromID(&*p,9900012)){
-                        // }
-
-                    }
-
-
-
                     GenParticlecounter ++;
                     //cout <<"------------------------------------------------------------------"<<endl;
                 }
@@ -1763,10 +1817,59 @@ void HNL::bookTree() {
     //zhud: For the Efficiency measurement
     outputTree->Branch("_nGenHNLMu", &_nGenHNLMu,"_nGenHNLMu/I");
     outputTree->Branch("_nlHNLMu", &_nlHNLMu,"_nlHNLMu/I");
+    
+    outputTree->Branch("_GenHNLP",    &_GenHNLP,    "_GenHNLP[_nGenLep]/D");
+    outputTree->Branch("_GenHNLEta",   &_GenHNLEta,   "_GenHNLEta[_nGenLep]/D");
+    outputTree->Branch("_GenHNLPhi",   &_GenHNLPhi,   "_GenHNLPhi[_nGenLep]/D");
+    outputTree->Branch("_GenHNLE",     &_GenHNLE,     "_GenHNLE[_nGenLep]/D");
+    outputTree->Branch("_GenHNLGamma", &_GenHNLGamma, "_GenHNLGamma[_nGenLep]/D");
+    outputTree->Branch("_GenHNLBeta ", &_GenHNLBeta , "_GenHNLBeta[_nGenLep]/D");
+
+
     outputTree->Branch("_GenHNLMuPt", &_GenHNLMuPt,"_GenHNLMuPt[_nGenLep]/D");
+    outputTree->Branch("_GenHNLMuEta", &_GenHNLMuEta,"_GenHNLMuEta[_nGenLep]/D");
+    outputTree->Branch("_GenHNLMuPhi", &_GenHNLMuPhi,"_GenHNLMuPhi[_nGenLep]/D");
+    outputTree->Branch("_GenHNLMuE", &_GenHNLMuE,"_GenHNLMuE[_nGenLep]/D");   
+
     outputTree->Branch("_lHNLMuPtmc", &_lHNLMuPtmc, "_lHNLMuPtmc[_nLeptons]/D");
+    
     outputTree->Branch("_lMuPt", &_lMuPt, "_lMuPt[_nLeptons]/D");
+    outputTree->Branch("_lMuPhi", &_lMuPhi, "_lMuPhi[_nLeptons]/D");
+    outputTree->Branch("_lMuEta", &_lMuEta, "_lMuEta[_nLeptons]/D");
+    outputTree->Branch("_lMuE", &_lMuE, "_lMuE[_nLeptons]/D");
+
     outputTree->Branch("_GenMuPt", &_GenMuPt, "_GenMuPt[_nGenLep]/D");
+    outputTree->Branch("_GenMuPhi", &_GenMuPhi, "_GenMuPhi[_nGenLep]/D");
+    outputTree->Branch("_GenMuEta", &_GenMuEta, "_GenMuEta[_nGenLep]/D");
+    outputTree->Branch("_GenMuE", &_GenMuE, "_GenMuE[_nGenLep]/D");
+
+    outputTree->Branch("_GenMuVx", &_GenMuVx,"_GenMuVx[_nGenLep]/D"); 
+    outputTree->Branch("_GenMuVy", &_GenMuVy,"_GenMuVy[_nGenLep]/D");
+    outputTree->Branch("_GenMuVxy", &_GenMuVxy,"_GenMuVxy[_nGenLep]/D");
+    outputTree->Branch("_GenMuVz", &_GenMuVz,"_GenMuVz[_nGenLep]/D");
+    outputTree->Branch("_GenMuVxyz", &_GenMuVxyz,"_GenMuVxyz[_nGenLep]/D");
+
+    outputTree->Branch("_GenHNLVxProd", &_GenHNLVxProd,"_GenHNLVxProd/D"); 
+    outputTree->Branch("_GenHNLVyProd", &_GenHNLVyProd,"_GenHNLVyProd/D");
+    outputTree->Branch("_GenHNLVxyProd", &_GenHNLVxyProd,"_GenHNLVxyProd/D");
+    outputTree->Branch("_GenHNLVzProd", &_GenHNLVzProd,"_GenHNLVzProd/D");
+    outputTree->Branch("_GenHNLVxyzProd", &_GenHNLVxyzProd,"_GenHNLVxyzProd/D");
+
+    outputTree->Branch("_GenHNLVxDecay", &_GenHNLVxDecay,"_GenHNLVxDecay/D"); 
+    outputTree->Branch("_GenHNLVyDecay", &_GenHNLVyDecay,"_GenHNLVyDecay/D");
+    outputTree->Branch("_GenHNLVxyDecay", &_GenHNLVxyDecay,"_GenHNLVxyDecay/D");
+    outputTree->Branch("_GenHNLVzDecay", &_GenHNLVzDecay,"_GenHNLVzDecay/D");
+    outputTree->Branch("_GenHNLVxyzDecay", &_GenHNLVxyzDecay,"_GenHNLVxyzDecay/D");
+    outputTree->Branch("_GenHNLVxyzDecay", &_GenHNLVxyzDecay,"_GenHNLVxyzDecay/D");
+    outputTree->Branch("_GenHNLMu3DDisplacement", &_GenHNLMu3DDisplacement,"_GenHNLMu3DDisplacement/D");
+
+    outputTree->Branch("_foundGenMuPt", &_foundGenMuPt, "_foundGenMuPt[_nGenLep]/D");
+    outputTree->Branch("_isdetectedMu", &_isdetectedMu, "_isdetectedMu[_nGenLep]/O");
+    outputTree->Branch("_isfromHNLMu", &_isfromHNLMu, "_isfromHNLMu[_nGenLep]/O");
+    outputTree->Branch("_ispromptMu", &_ispromptMu, "_ispromptMu[_nGenLep]/O");
+
+
+    //zhud: end efficiency measurement KPIs
 
 
     outputTree->Branch("_nEle", &_nEle, "_nEle/I");

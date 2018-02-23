@@ -1,0 +1,151 @@
+#ifndef UFANALYZER_H
+#define UFANALYZER_H
+
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EgammaCandidates/interface/Conversion.h"
+#include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
+#include "DataFormats/EgammaCandidates/interface/Photon.h"
+#include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/METReco/interface/PFMET.h"
+#include "DataFormats/METReco/interface/PFMETCollection.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
+#include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h" 
+#include "DataFormats/RecoCandidate/interface/IsoDeposit.h" 
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+
+#include "SUSYAnalyzer/PatAnalyzer/interface/Tools.h"
+
+//Root Classes
+
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TH1I.h"
+#include "TFile.h"
+#include "TDirectory.h"
+#include "TTree.h"
+#include "TStyle.h"
+#include "TCanvas.h"
+#include "TString.h"
+#include "TMath.h"
+#include "TLorentzVector.h"
+#include "TLegend.h"
+
+//Standard C++ classes
+#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+#include <utility>
+#include <ostream>
+#include <fstream>
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <iomanip>
+
+using namespace std;
+
+class UFAnalyzer : public edm::EDAnalyzer {
+ public:
+  
+  explicit UFAnalyzer(const edm::ParameterSet & iConfig);
+  ~UFAnalyzer(){};
+  
+ private:
+  
+  //virtual void analyze(edm::Event & iEvent, const edm::EventSetup & iSetup);
+  virtual void analyze(const edm::Event&, const edm::EventSetup&);
+  virtual void beginJob();
+  virtual void endJob(void);
+
+  edm::InputTag IT_muon;
+  edm::InputTag IT_electron;
+  edm::InputTag IT_jet;
+  edm::InputTag IT_pfmet;
+  edm::InputTag IT_beamspot;
+  edm::InputTag IT_hltresults;
+
+  //OutputFile
+  TString outputFile;
+
+  //HLT paths
+  std::vector< std::string> vMuMu_HLTs;
+  std::vector< std::string> vElEl_HLTs;
+  std::vector< std::string> vElMu_HLTs;
+  bool requireHLT;
+
+  //MET cuts
+  double value_pfmet;
+
+  //jet cuts
+  int value_jet_multiplicity;
+  double value_jet_et;
+  double value_jet_eta;
+  bool   bool_jet_id;
+  double value_jet_leptonVetoDR;
+  
+
+  //muon cuts
+  double value_muon_pt;
+  double value_muon_eta;
+  double value_muon_chi2Norm;
+  double value_muon_d0;
+  int value_muon_nValidHits;
+  double value_muon_reliso;
+  double value_muon_emVetoEt;
+  double value_muon_hadVetoEt;
+  
+  //electron cuts
+  double value_electron_pt;
+  double value_electron_eta;
+  bool bool_electron_crackRemoval;
+  double value_electron_d0;
+  double value_electron_reliso;
+  bool bool_electron_chargeConsistency;
+  std::string value_electron_id;
+  bool bool_electron_ecalDriven;
+  bool bool_electron_trackerDriven;
+  
+  double value_ht ;
+
+  //dilepton cuts
+  bool bool_dilepton_vetoZ;
+  double value_dilepton_deltaVz;
+  double value_dilepton_hfMass;
+
+  //histograms
+  TH1F hMET, hHT, hNJets, hMuonPt;
+  TH1F MET_DoubleMu_Den, MET_DoubleMu_Num, MET_DoubleEl_Den, MET_DoubleEl_Num, MET_DoubleEM_Den, MET_DoubleEM_Num;
+  TH1F HT_DoubleMu_Den, HT_DoubleMu_Num, HT_DoubleEl_Den, HT_DoubleEl_Num, HT_DoubleEM_Den, HT_DoubleEM_Num;
+
+};
+
+#endif

@@ -1,6 +1,6 @@
-<library   name="SUSYAnalyzerPatAnalyzer_plugins" file="*.cc">
+<library   name="HNLAnalyzerPatAnalyzer_plugins" file="*.cc">
   <flags   EDM_PLUGIN="1"/>
-<use   name="SUSYAnalyzer/PatAnalyzer"/>
+<use   name="HNLAnalyzer/PatAnalyzer"/>
 <use   name="clhep"/>
 <use   name="CondFormats/L1TObjects"/>
 <use   name="CondFormats/DataRecord"/>

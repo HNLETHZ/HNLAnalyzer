@@ -1,0 +1,448 @@
+#include "RA5Selection.h"
+#include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/Common/interface/View.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+using namespace std;
+using namespace edm;
+using namespace reco;
+using namespace tools;
+
+
+RA5Selection::RA5Selection(const edm::ParameterSet & iConfig)
+{
+  IT_muon         = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
+  IT_electron     = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
+  IT_jet          = iConfig.getParameter<edm::InputTag>("JetLabel");
+  IT_pfmet        = iConfig.getParameter<edm::InputTag>("METLabel")  ;
+  IT_beamspot     = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
+  //IT_hltresults   = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
+  //vMuMu_HLTs   = iConfig.exists("MuMuHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("MuMuHLTPaths") : std::vector< std::string >(0);
+  //vElEl_HLTs   = iConfig.exists("ElElHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("ElElHLTPaths") : std::vector< std::string >(0);
+  //vElMu_HLTs   = iConfig.exists("ElMuHLTPaths") ?  iConfig.getUntrackedParameter< std::vector< std::string > > ("ElMuHLTPaths") : std::vector< std::string >(0);
+
+  value_pfmet      = iConfig.getUntrackedParameter<double>("value_pfmet");
+
+  value_muon_pt    = iConfig.getUntrackedParameter<double>("value_muon_pt");
+  value_muon_eta   = iConfig.getUntrackedParameter<double>("value_muon_eta");
+  value_muon_chi2Norm = iConfig.getUntrackedParameter<double>("value_muon_chi2Norm");
+  value_muon_d0    = iConfig.getUntrackedParameter<double>("value_muon_d0");
+  value_muon_nValidHits = iConfig.getUntrackedParameter<int>("value_muon_nValidHits");
+  value_muon_reliso= iConfig.getUntrackedParameter<double>("value_muon_reliso");
+  value_muon_hadVetoEt = iConfig.getUntrackedParameter<double>("value_muon_hadVetoEt");
+  value_muon_emVetoEt = iConfig.getUntrackedParameter<double>("value_muon_emVetoEt");
+
+  value_electron_pt = iConfig.getUntrackedParameter<double>("value_electron_pt");
+  value_electron_eta= iConfig.getUntrackedParameter<double>("value_electron_eta");
+  bool_electron_crackRemoval = iConfig.getUntrackedParameter<bool>("bool_electron_crackRemoval");
+  value_electron_d0 = iConfig.getUntrackedParameter<double>("value_electron_d0");
+  bool_electron_chargeConsistency = iConfig.getUntrackedParameter<bool>("bool_electron_chargeConsistency");
+  value_electron_reliso = iConfig.getUntrackedParameter<double>("value_electron_reliso");
+  value_electron_id = iConfig.getUntrackedParameter<std::string>("value_electron_id");
+  bool_electron_ecalDriven = iConfig.getUntrackedParameter<bool>("bool_electron_ecalDriven");
+  bool_electron_trackerDriven = iConfig.getUntrackedParameter<bool>("bool_electron_trackerDriven");
+
+  value_jet_multiplicity = iConfig.getUntrackedParameter<int> ("value_jet_multiplicity");
+  value_jet_et = iConfig.getUntrackedParameter<double>("value_jet_et");
+  value_jet_eta = iConfig.getUntrackedParameter<double>("value_jet_eta");
+  bool_jet_id = iConfig.getUntrackedParameter<bool>("bool_jet_id");
+  value_jet_leptonVetoDR = iConfig.getUntrackedParameter<double>("value_jet_leptonVetoDR");
+  value_ht = iConfig.getUntrackedParameter<double>("value_ht");
+  
+  value_dilepton_deltaVz = iConfig.getUntrackedParameter<double>("value_dilepton_deltaVz");
+  value_dilepton_hfMass= iConfig.getUntrackedParameter<double>("value_dilepton_hfMass");
+  bool_dilepton_vetoZ = iConfig.getUntrackedParameter<bool>("bool_dilepton_vetoZ");
+
+
+  
+}
+
+
+RA5Selection::~RA5Selection(){}
+
+bool RA5Selection::filter(edm::Event & iEvent, const edm::EventSetup & iSetup) 
+{
+
+  edm::Handle< vector<pat::MET> > ThePFMET;
+  iEvent.getByLabel(IT_pfmet, ThePFMET);
+  if( ThePFMET.isValid() )
+    {
+      const vector<pat::MET> *pfmetcol = ThePFMET.product();
+      const pat::MET *pfmet = &(pfmetcol->front());
+      if( pfmet->pt() < value_pfmet ) // MET cut
+	return 0;
+    }
+  else
+    {
+      ERR( IT_pfmet );
+      return 0;
+    }
+
+  edm::Handle< reco::BeamSpot > TheBeamSpot;
+  iEvent.getByLabel( IT_beamspot, TheBeamSpot );
+  reco::BeamSpot bs;
+  if( TheBeamSpot.isValid() )
+    {
+      bs = *TheBeamSpot;
+    }
+  else 
+    {
+      ERR( IT_beamspot ) ;
+      return 0;
+    }
+
+  //Pat Muons
+  edm::Handle< std::vector<pat::Muon> > ThePatMuons;
+  iEvent.getByLabel( IT_muon, ThePatMuons );
+  std::vector< const pat::Muon* > vMuons;
+  if( ThePatMuons.isValid() ) 
+    {
+      for( std::vector< pat::Muon>::const_iterator mu = ThePatMuons->begin() ; mu != ThePatMuons->end() ; mu++ ) 
+	{
+	  if ( mu->pt()  < value_muon_pt ) continue;
+	  if ( !mu->isGood( "GlobalMuonPromptTight") ) continue; 
+	  if ( !mu->isTrackerMuon() ) continue; 
+	  if ( TMath::Abs( mu->eta() ) > value_muon_eta ) continue;
+	  const reco::TrackRef innerTrack = mu->innerTrack();
+	  if( innerTrack.isNull() ) continue;
+	  if( TMath::Abs( innerTrack->dxy( bs.position() ) ) > value_muon_d0 ) continue;
+	  if( innerTrack->numberOfValidHits() < value_muon_nValidHits ) continue;
+	  const reco::TrackRef globalTrack = mu->globalTrack() ;
+	  if( globalTrack.isNull() ) continue;
+	  if( globalTrack->normalizedChi2() > value_muon_chi2Norm ) continue;
+	  if( mu->isolationR03().emVetoEt > value_muon_emVetoEt ) continue;
+	  if( mu->isolationR03().hadVetoEt > value_muon_hadVetoEt ) continue;
+	  float RelIso = (mu->isolationR03().emEt + mu->isolationR03().hadEt + mu->isolationR03().sumPt) / mu->pt() ;
+	  if( RelIso > value_muon_reliso ) continue;
+
+	  //its a signal-like muon
+	  vMuons.push_back(&*mu);
+	}      
+    }
+  else
+    {
+      ERR(IT_muon) ;
+      return 0;
+    }
+  
+  //Pat Electrons
+  edm::Handle< std::vector<pat::Electron> > ThePatElectrons;
+  iEvent.getByLabel( IT_electron, ThePatElectrons );
+  std::vector< const pat::Electron* > vElectrons;
+  if( ThePatElectrons.isValid() )
+    {
+      for( std::vector<pat::Electron>::const_iterator el = ThePatElectrons->begin() ; el != ThePatElectrons->end() ; el++ ) 
+	{
+	  if( el->pt() < value_electron_pt ) continue;
+	  if( TMath::Abs(el->eta()) > value_electron_eta ) continue;
+	  if( bool_electron_crackRemoval ) 
+	    if( TMath::Abs(el->eta()) < 1.567 &&  TMath::Abs(el->eta()) > 1.470 ) continue;
+	 
+	  const reco::GsfTrackRef gsfTrack = el->gsfTrack();
+	  if( TMath::Abs( gsfTrack->dxy( bs.position() ) ) > value_electron_d0 ) continue;
+	  
+	  
+	  float ecalIso = TMath::Abs(el->eta()) > 1.47 ? el->dr03TkSumPt() : TMath::Max(el->dr03TkSumPt()-1.,0.); 
+	  float RelIso = (el->dr03EcalRecHitSumEt() + el->dr03HcalTowerSumEt() + ecalIso ) / el->pt() ;
+	  if( RelIso  > value_electron_reliso ) continue;
+
+	  if( bool_electron_chargeConsistency && !el->isGsfCtfScPixChargeConsistent() )  continue;
+	  if( value_electron_id.size() )
+	    {
+	      int elId =  el->electronID(value_electron_id);
+	      if( elId != 5 && elId != 7  ) continue;  //impose isolation seperately...
+	    }
+	  if( bool_electron_ecalDriven && !el->ecalDrivenSeed() ) continue;
+	  if( bool_electron_trackerDriven && !el->trackerDrivenSeed() ) continue;
+	  
+	  vElectrons.push_back(&*el );
+	}
+    }
+  else
+    {
+      ERR( IT_electron );
+      return 0;
+    }
+
+  //Pat Jets
+  edm::Handle< std::vector< pat::Jet> > ThePatJets;
+  iEvent.getByLabel(IT_jet , ThePatJets );
+  std::vector< const pat::Jet* > vJets;
+  double HT = 0.;
+  if( ThePatJets.isValid() )
+    {
+      for( std::vector<pat::Jet>::const_iterator jet = ThePatJets->begin(); jet != ThePatJets->end(); jet++ ) 
+	{
+	  if( jet->et() < value_jet_et )continue;
+	  if( TMath::Abs( jet->eta() ) > value_jet_eta ) continue;
+	  if( bool_jet_id )
+	    {
+	      if( jet->neutralHadronEnergyFraction() >= 0.99 ) continue;
+	      if( jet->neutralEmEnergyFraction() >= 0.99 ) continue;
+	      if( ( jet->neutralHadronMultiplicity() + jet->chargedHadronMultiplicity() ) < 2 ) continue;
+	      if( TMath::Abs( jet->eta() ) < 2.4 ) 
+		{
+		  if( jet->chargedHadronEnergyFraction() == 0. ) continue;
+		  if( jet->chargedEmEnergyFraction() >= 0.99 ) continue;
+		  if( jet->chargedMultiplicity() == 0 ) continue;
+		}
+	    }
+
+	  bool vetoJet = false;
+	  for( std::vector<const pat::Muon*>::const_iterator mu = vMuons.begin(); mu != vMuons.end() ; mu++ )
+	    {
+	      float dphi = TMath::ACos( TMath::Cos( (*mu)->phi()-jet->phi() ));
+	      float deta = (*mu)->eta()-jet->eta();
+	      float dr = TMath::Sqrt( dphi*dphi + deta*deta) ;
+	      if( dr < value_jet_leptonVetoDR )
+		{
+		  vetoJet = true;
+		  break;
+		}
+	    }
+	  if( vetoJet ) continue;
+	  for( std::vector<const pat::Electron*>::const_iterator el = vElectrons.begin() ; el != vElectrons.end(); el++ ) 
+	    {
+	      float dphi = TMath::ACos( TMath::Cos( (*el)->phi()-jet->phi() ) );
+	      float deta = (*el)->eta() - jet->eta();
+	      float dr = TMath::Sqrt( dphi*dphi + deta*deta );
+	      if( dr < value_jet_leptonVetoDR ) 
+		{
+		  vetoJet = true;
+		  break;
+		}
+	    }
+	  if( vetoJet ) continue;
+	  vJets.push_back( &*jet );
+	  HT+= jet->et();
+	}
+    }
+  else
+    {
+      ERR(IT_jet);
+      return 0;
+    }
+
+  if( HT < value_ht ) return 0;
+  if( vJets.size() < (unsigned int) value_jet_multiplicity ) return 0;
+
+  //Get Same-Sign Pairs
+  std::vector<lepton_pair>  vSSLeps;
+
+  //First investigate dimuon channel
+  for(unsigned int i = 0 ; i < vMuons.size() ;i++ ) 
+    {
+      const pat::Muon *mu_i = vMuons[i];
+      bool ZVeto = false;
+      //check for z-veto
+      for(unsigned int k = i+1 ; k < vMuons.size() ; k++ )
+	{
+	  const pat::Muon *mu_k = vMuons[k];
+	  if( mu_i->charge() ==  mu_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	  float dVz = mu_i->vz() - mu_k->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;	  
+	  float m = mass( mu_i->pt() ,  mu_k->pt(), mu_i->eta() , mu_k->eta() ,  mu_i->phi() , mu_k->phi());
+	  if( bool_dilepton_vetoZ ) 
+	    {
+	      if( m > 76.0 && m < 106. ) 
+		{
+		  ZVeto = true;
+		  break;
+		}
+	    }
+	}
+      if( ZVeto ) continue;
+      
+      //search for lepton of same-sign
+      for(unsigned int j = i+1 ; j < vMuons.size() ; j++ )
+	{
+	  const pat::Muon *mu_j= vMuons[j];
+	  if( mu_i->charge() != mu_j->charge() ) continue;  //require same-sign
+	  float m = mass( mu_i->pt(), mu_j->pt(), mu_i->eta(), mu_j->eta(), mu_i->phi(), mu_j->phi());
+	  if( m < value_dilepton_hfMass ) continue; //heavy-flavor mass veto
+	  float dVz = mu_i->vz() - mu_j->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	  
+	  //check second lepton against Z-mass
+	  for(unsigned int k = 0 ; k < vMuons.size() ; k++ )
+	    {
+	      if( j==k ) continue;
+	      const pat::Muon *mu_k = vMuons[k];
+	      if( mu_j->charge() ==  mu_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	      dVz = mu_j->vz() - mu_k->vz();
+	      if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	      m = mass( mu_j->pt() ,  mu_k->pt(), mu_j->eta() , mu_k->eta() ,  mu_j->phi() , mu_k->phi());
+	      if( bool_dilepton_vetoZ ) 
+		{
+		  if( m > 76.0 && m < 106. ) 
+		    {
+		      ZVeto = true;
+		      break;
+		    }
+		}
+	    }	  
+	  if( ZVeto ) continue; 
+
+	  //Candidate DiMuon Pair
+	  lepton_pair l ; 
+	  l.channel = 1;
+	  l.i = i;
+	  l.j = j;
+	  l.sumPt = mu_i->pt()+mu_j->pt(); //used for prioritizing multiple pairs in the same event	  
+	  vSSLeps.push_back(l);
+	}
+    }
+  if( vSSLeps.size() ) 
+    {
+      cout <<setw(50) <<  "MuMu Signal Event" << endl;
+      return 1; 
+    }
+  
+  //next investigate electron-muon channel
+  for(unsigned int i = 0 ; i < vMuons.size() ;i++ ) 
+    {
+      const pat::Muon *mu_i = vMuons[i];
+      bool ZVeto = false;
+      //check for z-veto
+      for(unsigned int k = i+1 ; k < vMuons.size() ; k++ )
+	{
+	  const pat::Muon *mu_k = vMuons[k];
+	  if( mu_i->charge() ==  mu_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	  float dVz = mu_i->vz() - mu_k->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	  
+	  float m = mass( mu_i->pt() ,  mu_k->pt(), mu_i->eta() , mu_k->eta() ,  mu_i->phi() , mu_k->phi());
+	  if( bool_dilepton_vetoZ ) 
+	    {
+	      if( m > 76.0 && m < 106. ) 
+		{
+		  ZVeto = true;
+		  break;
+		}
+	    }
+	}
+      if( ZVeto ) continue;
+      
+      for(unsigned int j = 0 ; j < vElectrons.size() ; j++ )
+	{
+	  const pat::Electron *el_j= vElectrons[j];
+	  if( mu_i->charge() != el_j->charge() ) continue;  // require same-sign
+	  float m = mass( mu_i->pt(), el_j->pt(), mu_i->eta(), el_j->eta(), mu_i->phi(), el_j->phi());
+	  if( m < value_dilepton_hfMass ) continue; //heavy-flavor mass veto
+	  float dVz = mu_i->vz() - el_j->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	  
+	  //check second lepton against Z-mass
+	  for(unsigned int k = 0 ; k < vElectrons.size() ; k++ )
+	    {
+	      if( j==k ) continue;
+	      const pat::Electron *el_k = vElectrons[k];
+	      if( el_j->charge() ==  el_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	      dVz = el_j->vz() - el_k->vz();
+	      if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	      m = mass( el_j->pt() ,  el_k->pt(), el_j->eta() , el_k->eta() ,  el_j->phi() , el_k->phi());
+	      if( bool_dilepton_vetoZ ) 
+		{
+		  if( m > 76.0 && m < 106. ) 
+		    {
+		      ZVeto = true;
+		      break;
+		    }
+		}
+	    }	  
+	  if( ZVeto ) continue; 
+
+	  //Candidate Electron-Muon Pair
+	  lepton_pair l ; 
+	  l.channel = 2;
+	  l.i = i;
+	  l.j = j;
+	  l.sumPt = mu_i->pt()+el_j->pt(); //used for prioritizing multiple pairs in the same event	  
+	  vSSLeps.push_back(l);
+	}
+    }
+  if( vSSLeps.size() ) 
+    {
+      cout <<setw(50) <<  "ElMu Signal Event" << endl;
+      return 1; 
+    }
+
+  //next investigate di-electron channel
+  for(unsigned int i = 0 ; i < vElectrons.size() ;i++ ) 
+    {
+      const pat::Electron *el_i = vElectrons[i];
+      bool ZVeto = false;
+      //check for z-veto
+      for(unsigned int k = i+1 ; k < vElectrons.size() ; k++ )
+	{
+	  const pat::Electron *el_k = vElectrons[k];
+	  if( el_i->charge() ==  el_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	  float dVz = el_i->vz() - el_k->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	  
+	  float m = mass( el_i->pt() ,  el_k->pt(), el_i->eta() , el_k->eta() ,  el_i->phi() , el_k->phi());
+	  if( bool_dilepton_vetoZ ) 
+	    {
+	      if( m > 76.0 && m < 106. ) 
+		{
+		  ZVeto = true;
+		  break;
+		}
+	    }
+	}
+      if( ZVeto ) continue;
+      
+      for(unsigned int j = i+1 ; j < vElectrons.size() ; j++ )
+	{
+	  const pat::Electron *el_j= vElectrons[j];
+	  if( el_i->charge() != el_j->charge() ) continue;  // require same-sign
+	  float m = mass( el_i->pt(), el_j->pt(), el_i->eta(), el_j->eta(), el_i->phi(), el_j->phi());
+	  if( m < value_dilepton_hfMass ) continue; //heavy-flavor mass veto
+	  float dVz = el_i->vz() - el_j->vz();
+	  if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	  
+	  //check second lepton against Z-mass
+	  for(unsigned int k = 0 ; k < vElectrons.size() ; k++ )
+	    {
+	      if( j==k ) continue;
+	      const pat::Electron *el_k = vElectrons[k];
+	      if( el_j->charge() ==  el_k->charge() ) continue;  // Opp-sign requried for Z-veto
+	      dVz = el_j->vz() - el_k->vz();
+	      if( TMath::Abs(dVz) > value_dilepton_deltaVz ) continue;
+	      m = mass( el_j->pt() ,  el_k->pt(), el_j->eta() , el_k->eta() ,  el_j->phi() , el_k->phi());
+	      if( bool_dilepton_vetoZ ) 
+		{
+		  if( m > 76.0 && m < 106. ) 
+		    {
+		      ZVeto = true;
+		      break;
+		    }
+		}
+	    }	  
+	  if( ZVeto ) continue; 
+
+	  //Candidate DiElectron Pair
+	  lepton_pair l ; 
+	  l.channel = 2;
+	  l.i = i;
+	  l.j = j;
+	  l.sumPt = el_i->pt()+el_j->pt(); //used for prioritizing multiple pairs in the same event	  
+	  vSSLeps.push_back(l);
+	}
+    }
+
+  if( vSSLeps.size() ) 
+    {
+      cout <<setw(50) <<  "DiEl Signal Event" << endl;
+      return 1; 
+    }
+  
+
+  
+
+  return 0;
+}
+
+
+
+
+DEFINE_FWK_MODULE(RA5Selection);
