@@ -293,7 +293,7 @@ private:
     edm::EDGetTokenT<pat::PackedCandidateCollection>          pfcToken_           ;
     edm::EDGetTokenT<pat::JetCollection>                      jetToken_           ;
     edm::EDGetTokenT<pat::MuonCollection>     		            muonToken_  	;
-    edm::EDGetTokenT<pat::MuonCollection>                       displacedStandAloneMuonsToken_;
+    edm::EDGetTokenT<std::vector<reco::Track>>                       displacedStandAloneMuonsToken_;
     edm::EDGetTokenT<pat::TauCollection>     		            tauToken_  	;
     edm::EDGetTokenT<pat::ElectronCollection>		            electronToken1_	;
     edm::EDGetTokenT<edm::View<pat::Electron> >		            electronToken_	;
@@ -398,6 +398,12 @@ private:
     TClonesArray* _jetP4;
     TClonesArray* _jetAllP4;
     
+    
+    //zhud: Displaced Stand Alone Muons
+    int _nDSAMu;
+
+
+
     int _nLeptons;
     int _nLooseLeptons;
     int _nEle;

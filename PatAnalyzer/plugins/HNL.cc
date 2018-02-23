@@ -67,7 +67,7 @@ HNL::HNL(const edm::ParameterSet & iConfig) :
     pfcToken_                         (consumes<pat::PackedCandidateCollection>                    (iConfig.getParameter<edm::InputTag>("pfcLabel"))),
     jetToken_                         (consumes<pat::JetCollection>                    (iConfig.getParameter<edm::InputTag>("JetLabel"))),
     muonToken_                        (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("MuonLabel"))),
-    displacedStandAloneMuonsToken_    (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel"))),
+    displacedStandAloneMuonsToken_    (consumes<std::vector<reco::Track>>                 (iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel"))),
     tauToken_                        (consumes<pat::TauCollection>                   (iConfig.getParameter<edm::InputTag>("TauLabel"))),
     electronToken1_                    (consumes<pat::ElectronCollection>             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
     electronToken_                    (consumes<edm::View<pat::Electron> >             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
@@ -263,7 +263,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
 
 
                 //============ Pat displacedStandAloneMuons ============
-                edm::Handle< std::vector<pat::Muon> > theDisplacedStandAloneMuons;
+                edm::Handle< std::vector<reco::Track> > theDisplacedStandAloneMuons;
                 iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
                 if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
                 //======================================================
@@ -297,7 +297,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 }
                 
                 std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
-                std::vector<const pat::Muon* > sDisplacedStandAloneMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
+                std::vector<const reco::Track* > sDSAMu = SelectAllTrackMuons( *theDisplacedStandAloneMuons);
 
                 for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
                     
@@ -713,7 +713,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     //==================================
     
     //============ Pat displacedStandAloneMuons ============
-    edm::Handle< std::vector<pat::Muon> > theDisplacedStandAloneMuons;
+    edm::Handle< std::vector<reco::Track> > theDisplacedStandAloneMuons;
     iEvent.getByToken( displacedStandAloneMuonsToken_, theDisplacedStandAloneMuons );
     if( ! theDisplacedStandAloneMuons.isValid() )  ERR(IT_displacedStandAloneMuons) ;
     //======================================================
@@ -794,7 +794,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     
     //zhud: all Reco without preselection
     std::vector<const pat::Muon* > sMu = SelectAllPatMuons( *thePatMuons, _minPt0, PV, _looseD0Mu, true);
-    std::vector<const pat::Muon* > sDisplacedStandAloneMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
+    //std::vector<const pat::Muon* > sDSAMu = SelectAllPatMuons( *theDisplacedStandAloneMuons, _minPt0, PV, _looseD0Mu, true);
+    std::vector<const reco::Track* > sDSAMu = SelectAllTrackMuons(*theDisplacedStandAloneMuons);
 
 
 
@@ -814,8 +815,23 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
 
 
     int leptonCounter = 0;
-    //int i=0;
+    _nDSAMu = 0;
     
+    //***********************************************************
+    //***zhud: Analyzing Displaced Stand Alone Muons*************
+    //***********************************************************
+    cout << "---zhud: Doing DSA Muons"<<endl; 
+    for(unsigned int i=0; i<sDSAMu.size(); i++){
+        const reco::Track *iM = sDSAMu[i];
+        cout<<"---zhud: DSA 1: pt = " << iM->pt() <<endl;
+        _nDSAMu++;
+    }
+
+
+    //***********************************************************
+    //***zhud: Finished Analyzing Displaced Stand Alone Muons****
+    //***********************************************************
+
     
 
     //**************************************************
@@ -855,7 +871,6 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
         
         _mvaValue[leptonCounter] = -1;
         _muonSegmentComp[leptonCounter] = iM->segmentCompatibility();
-        
         
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#Loose_Muon
         //https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#MediumID2016_to_be_used_with_Run
@@ -1885,9 +1900,10 @@ void HNL::bookTree() {
     outputTree->Branch("_isfromHNLMu", &_isfromHNLMu, "_isfromHNLMu[_nGenLep]/O");
     outputTree->Branch("_ispromptMu", &_ispromptMu, "_ispromptMu[_nGenLep]/O");
 
-
     //zhud: end efficiency measurement KPIs
 
+
+    outputTree->Branch("_nDSAMu", &_nDSAMu, "_nDSAMu/I");
 
     outputTree->Branch("_nEle", &_nEle, "_nEle/I");
     outputTree->Branch("_nMu", &_nMu, "_nMu/I");

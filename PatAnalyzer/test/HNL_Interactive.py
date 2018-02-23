@@ -81,7 +81,8 @@ process.source = cms.Source ("PoolSource",
 # Input MiniAOD destination
 if isMC:
     process.source.fileNames = cms.untracked.vstring(               
-	      'file:/afs/cern.ch/user/d/dezhu/workspace/public/10A42D2B-2274-E711-AA76-047D7B2E84EC.root' #10/0.0001, ctau = 176.5 mm
+	      'root://cms-xrd-global.cern.ch//store/user/tomc/heavyNeutrinoMiniAOD/Moriond17/displaced/HeavyNeutrino_trilepton_M-2.1_V-0.00316227766017_e_onshell_pre2017_NLO/heavyNeutrino_104.root'
+        #'file:/afs/cern.ch/user/d/dezhu/workspace/public/10A42D2B-2274-E711-AA76-047D7B2E84EC.root' #10/0.0001, ctau = 176.5 mm
        #'file:/afs/cern.ch/user/d/dezhu/workspace/public/20989B66-CA73-E711-ABD7-7845C4FC3C86.root' #5/0.001, ctau = 56.8 mm
 #             'file:/cms/data/store/mc/RunIISpring16MiniAODv2/ZGTo2LG_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/70000/8E8FD1DC-C526-E611-A48A-002590E7DFFC.root'
     )
