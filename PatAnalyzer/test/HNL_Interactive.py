@@ -107,6 +107,8 @@ process.TFileService = cms.Service("TFileService", fileName = cms.string(outputF
 #FakeLeptons
 process.FakeLeptons = cms.EDAnalyzer("HNL",
                                        MuonLabel = cms.InputTag("slimmedMuons"),
+                                       displacedGlobalMuonsLabel = cms.InputTag("displacedGlobalMuons"),
+                                       displacedStandAloneMuonsLabel = cms.InputTag("displacedStandAloneMuons"),
                                        ElectronLabel = cms.InputTag("slimmedElectrons"),
                                        TauLabel = cms.InputTag("slimmedTaus"),
 					                             convLabel = cms.InputTag("reducedEgamma:reducedConversions"),

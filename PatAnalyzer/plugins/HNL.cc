@@ -67,6 +67,7 @@ HNL::HNL(const edm::ParameterSet & iConfig) :
     pfcToken_                         (consumes<pat::PackedCandidateCollection>                    (iConfig.getParameter<edm::InputTag>("pfcLabel"))),
     jetToken_                         (consumes<pat::JetCollection>                    (iConfig.getParameter<edm::InputTag>("JetLabel"))),
     muonToken_                        (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("MuonLabel"))),
+    displacedStandAloneMuonsToken_    (consumes<pat::MuonCollection>                   (iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel"))),
     tauToken_                        (consumes<pat::TauCollection>                   (iConfig.getParameter<edm::InputTag>("TauLabel"))),
     electronToken1_                    (consumes<pat::ElectronCollection>             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
     electronToken_                    (consumes<edm::View<pat::Electron> >             (iConfig.getParameter<edm::InputTag>("ElectronLabel"))),
@@ -76,16 +77,17 @@ HNL::HNL(const edm::ParameterSet & iConfig) :
     filterToken_                     (consumes<edm::TriggerResults>                   (iConfig.getParameter<edm::InputTag>("filterResultsLabel")))
 
     {
-        Sample              = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
-        IT_muon             = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
-        IT_electron         = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
-        IT_tau              = iConfig.getParameter<edm::InputTag>("TauLabel") ;
-        IT_htt              = iConfig.getParameter<edm::InputTag>("L1httLabel");
-        IT_jet              = iConfig.getParameter<edm::InputTag>("JetLabel");
-        IT_pfmet            = iConfig.getParameter<edm::InputTag>("METLabel")  ;
-        IT_beamspot         = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
-        IT_hltresults       = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
-        IT_genParts         = iConfig.getParameter<edm::InputTag>("genPartsLabel");
+        Sample                         = iConfig.getUntrackedParameter<std::string>("SampleLabel") ;
+        IT_muon                        = iConfig.getParameter<edm::InputTag>("MuonLabel") ;
+        IT_displacedStandAloneMuons    = iConfig.getParameter<edm::InputTag>("displacedStandAloneMuonsLabel") ;
+        IT_electron                    = iConfig.getParameter<edm::InputTag>("ElectronLabel") ;
+        IT_tau                         = iConfig.getParameter<edm::InputTag>("TauLabel") ;
+        IT_htt                         = iConfig.getParameter<edm::InputTag>("L1httLabel");
+        IT_jet                         = iConfig.getParameter<edm::InputTag>("JetLabel");
+        IT_pfmet                       = iConfig.getParameter<edm::InputTag>("METLabel")  ;
+        IT_beamspot                    = iConfig.getParameter<edm::InputTag>("BeamSpotLabel");
+        IT_hltresults                  = iConfig.getParameter<edm::InputTag>("HLTResultsLabel");
+        IT_genParts                    = iConfig.getParameter<edm::InputTag>("genPartsLabel");
     }
 
 
