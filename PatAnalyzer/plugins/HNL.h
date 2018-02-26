@@ -541,6 +541,7 @@ private:
 
     double _foundGenMuPt[nLeptonsMax];
     bool _isdetectedMu[nLeptonsMax], _isfromHNLMu[nLeptonsMax], _ispromptMu[nLeptonsMax];
+    bool _isdetectedDSAMu[nLeptonsMax], _isfromHNLDSAMu[nLeptonsMax], _ispromptDSAMu[nLeptonsMax];
 
     double _GenMuVx[nLeptonsMax], _GenMuVy[nLeptonsMax], _GenMuVxy[nLeptonsMax], _GenMuVz[nLeptonsMax], _GenMuVxyz[nLeptonsMax];
     double _GenHNLVxProd, _GenHNLVyProd, _GenHNLVxyProd, _GenHNLVzProd, _GenHNLVxyzProd;

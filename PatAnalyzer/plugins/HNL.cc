@@ -302,7 +302,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                 for(GenParticleCollection::const_reverse_iterator p = TheGenParticles->rbegin() ; p != TheGenParticles->rend() ; p++ ) {
                     
                     //cout << "------------------------------------------------------------------"<< endl;
-                    //cout << "---zhud: starting for loop through all TheGenParticles; Number = " << GenParticlecounter << endl;
+                    // cout << "---zhud: starting for loop through all TheGenParticles; Number = " << GenParticlecounter << endl;
     		        int id = TMath::Abs(p->pdgId());
                     // std::cout<<"gen particle pdg ID "<<id<<std::endl;
                     //if (id == 1000023) mChi20 = p->mass(); // SUSY stuff
@@ -325,6 +325,8 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                             _isdetectedMu[_nGenMu]=false;
                             _isfromHNLMu[_nGenMu]=false;
                             _ispromptMu[_nGenMu]=false;
+
+                            _isdetectedDSAMu[_nGenMu]=false;
                             // cout << "---zhud: doing Gen Muon number " << GenParticlecounter << ": ";
                             
                             _GenMuPt[_nGenMu] = p->pt();
@@ -348,7 +350,7 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                             TLorentzVector vGen, vReco;
                             vGen.SetPtEtaPhiE(p->pt(),p->eta(),p->phi(),p->energy());
                             double deltaR = 9999.;
-
+			                double deltaRDSA = 9999.;
 
                             for(unsigned int i = 0 ; i < sMu.size() ;i++ ){
                                 const pat::Muon *iM = sMu[i];
@@ -358,17 +360,36 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
                                     deltaR = deltaRcur;
                                 }    
                             }
+
+            			    for(unsigned int i = 0; i<sDSAMu.size(); i++){
+                			    const reco::Track *iDSAMu = sDSAMu[i];
+                				vReco.SetPtEtaPhiE(iDSAMu->pt(),iDSAMu->eta(),iDSAMu->phi(),0); // energy by default set to 0 since energy is not a function of <reco::Track>
+                				double deltaRcur = vGen.DeltaR(vReco);
+                				if(deltaRcur < deltaRDSA){
+                					deltaRDSA = deltaRcur;
+                				}
+            			    }
                             
                             if (deltaR < 0.2){
                                 _foundGenMuPt[_nGenMu] = p->pt();
                                 _isdetectedMu[_nGenMu] = true;
-                                //cout << "---zhud: Found a corresponding Reco Muon!!!" << endl;      
+                                // cout << "---zhud: Found a corresponding Reco Muon!!!" << endl;      
                             }
 
+                            
                             if (deltaR >= 0.2){
                                 _foundGenMuPt[_nGenMu] = -1;
                                 _isdetectedMu[_nGenMu] = false;
                                 //cout << "---zhud: NO corresponding Reco Muon founded..." << endl;
+                            }
+
+                            if (deltaRDSA < 0.2){
+                                _isdetectedDSAMu[_nGenMu] = true;
+                                // cout << "---zhud: Found a corresponding Reco DSA Muon!!!" << endl; 
+                            }
+
+                            if (deltaRDSA >= 0.2){
+                                _isdetectedDSAMu[_nGenMu] = false;
                             }
 
                             
@@ -820,10 +841,10 @@ void HNL::analyze(const edm::Event& iEvent, const edm::EventSetup& iEventSetup){
     //***********************************************************
     //***zhud: Analyzing Displaced Stand Alone Muons*************
     //***********************************************************
-    cout << "---zhud: Doing DSA Muons"<<endl; 
+    // cout << "---zhud: Doing DSA Muons"<<endl; 
     for(unsigned int i=0; i<sDSAMu.size(); i++){
         const reco::Track *iM = sDSAMu[i];
-        cout<<"---zhud: DSA 1: pt = " << iM->pt() <<endl;
+        // cout<<"---zhud: DSA 1: pt = " << iM->pt() <<endl;
         _nDSAMu++;
     }
 
@@ -1899,6 +1920,8 @@ void HNL::bookTree() {
     outputTree->Branch("_isdetectedMu", &_isdetectedMu, "_isdetectedMu[_nGenLep]/O");
     outputTree->Branch("_isfromHNLMu", &_isfromHNLMu, "_isfromHNLMu[_nGenLep]/O");
     outputTree->Branch("_ispromptMu", &_ispromptMu, "_ispromptMu[_nGenLep]/O");
+    outputTree->Branch("_isdetectedDSAMu", &_isdetectedDSAMu, "_isdetectedDSAMu[_nGenLep]/O");
+
 
     //zhud: end efficiency measurement KPIs
 
